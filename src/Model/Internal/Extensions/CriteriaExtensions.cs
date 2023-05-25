@@ -4,6 +4,7 @@ namespace QueryPack.RestApi.Model.Internal.Extensions
     using System.Reflection;
     using Microsoft.EntityFrameworkCore;
     using Meta;
+    using System.Collections.Concurrent;
 
     internal static class CriteriaExtensions
     {
@@ -13,20 +14,35 @@ namespace QueryPack.RestApi.Model.Internal.Extensions
         static MethodInfo SetOrderMethod = typeof(CriteriaExtensions).GetMethod(nameof(SetOrder),
          BindingFlags.Static | BindingFlags.NonPublic);
 
+        static ConcurrentDictionary<string, Delegate> _internalMethodsCache
+            = new ConcurrentDictionary<string, Delegate>();
+
         public static IQueryable<TModel> Include<TModel>(this IQueryable<TModel> self,
             PropertyMetadata candidate, ModelMetadata modelMetadata)
             where TModel : class
         {
-            var genericInclude = IncludeMethod.MakeGenericMethod(typeof(TModel), candidate.PropertyType);
-            return (IQueryable<TModel>)genericInclude.Invoke(null, new object[] { self, candidate.PropertyExpression, modelMetadata.InstanceExpression });
+            var key = $"{IncludeMethod.Name}Of{typeof(TModel).FullName}{candidate.PropertyName}";
+            var cachedMethod = _internalMethodsCache.GetOrAdd(key, (key) =>
+           {
+               var genericInclude = IncludeMethod.MakeGenericMethod(typeof(TModel), candidate.PropertyType);
+               return MethodFactory.CreateGenericMethod<IQueryable<TModel>>(genericInclude);
+           });
+
+            return ((Func<object, object[], IQueryable<TModel>>)cachedMethod)(null, new object[] { self, candidate.PropertyExpression, modelMetadata.InstanceExpression });
         }
 
         public static IQueryable<TModel> OrderBy<TModel>(this IQueryable<TModel> self,
             PropertyMetadata candidate, ModelMetadata modelMetadata, OrderDirection direction)
             where TModel : class
         {
-            var genericSetOrder = SetOrderMethod.MakeGenericMethod(typeof(TModel), candidate.PropertyType);
-            return (IQueryable<TModel>)genericSetOrder.Invoke(null, new object[] { self, candidate.PropertyExpression, modelMetadata.InstanceExpression, direction });
+            var key = $"{SetOrderMethod.Name}Of{typeof(TModel).FullName}{candidate.PropertyName}";
+            var cachedMethod = _internalMethodsCache.GetOrAdd(key, (key) =>
+            {
+                var genericSetOrder = SetOrderMethod.MakeGenericMethod(typeof(TModel), candidate.PropertyType);
+                return MethodFactory.CreateGenericMethod<IQueryable<TModel>>(genericSetOrder);
+            });
+
+            return ((Func<object, object[], IQueryable<TModel>>)cachedMethod)(null, new object[] { self, candidate.PropertyExpression, modelMetadata.InstanceExpression, direction });
         }
 
         private static IQueryable<TModel> Include<TModel, TNavigation>(IQueryable<TModel> query,
