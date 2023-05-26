@@ -44,5 +44,4 @@ namespace QueryPack.RestApi.Model.Internal
                     parameter.ParameterType)).ToArray();
         }
     }
-
 }

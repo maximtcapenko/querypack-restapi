@@ -10,5 +10,8 @@ namespace QueryPack.RestApi.Model.Meta
 
         public static IEnumerable<PropertyMetadata> GetRegularProperties(this ModelMetadata self)
              => self.PropertyMetadata.Where(e => e.IsPrimitive);
+        
+        public static bool Contains(this ModelMetadata self, PropertyMetadata propertyMetadata)
+            => self.PropertyMetadata.Contains(propertyMetadata);
     }
 }

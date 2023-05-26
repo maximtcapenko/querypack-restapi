@@ -6,7 +6,7 @@ namespace QueryPack.RestApi.Model.Internal.Criterias
 
     internal class IncludeCriteria<TModel> : ICriteria<TModel>
         where TModel : class
-    {   
+    {
         private readonly IEnumerable<PropertyMetadata> _navigations;
         private readonly ModelMetadata _modelMetadata;
 
@@ -18,9 +18,10 @@ namespace QueryPack.RestApi.Model.Internal.Criterias
 
         public void Apply(IQueryContainer<TModel> query)
         {
-            foreach(var navigation in _navigations)
+            foreach (var navigation in _navigations)
             {
-                query.Query = query.Query.Include(navigation, _modelMetadata);
+                if (_modelMetadata.Contains(navigation))
+                    query.Query = query.Query.Include(navigation, _modelMetadata);
             }
         }
     }
