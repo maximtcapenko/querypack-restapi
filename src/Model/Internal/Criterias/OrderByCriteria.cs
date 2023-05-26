@@ -20,7 +20,8 @@ namespace QueryPack.RestApi.Model.Internal.Criterias
         {
             foreach (var selector in _orderSelectors)
             {
-                query.Query = query.Query.OrderBy(selector.Key, _modelMetadata, selector.Value);
+                if (_modelMetadata.Contains(selector.Key))
+                    query.Query = query.Query.OrderBy(selector.Key, _modelMetadata, selector.Value);
             }
         }
     }

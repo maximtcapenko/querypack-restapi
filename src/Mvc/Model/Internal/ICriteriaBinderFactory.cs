@@ -1,6 +1,6 @@
 namespace QueryPack.RestApi.Mvc.Model.Intrnal
 {
-    interface ICriteriaBinderFactory
+    internal interface ICriteriaBinderFactory
     {
         bool CanCreate(Type type);
     }

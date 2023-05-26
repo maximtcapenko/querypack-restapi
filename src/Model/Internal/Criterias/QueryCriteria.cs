@@ -19,24 +19,26 @@ namespace QueryPack.RestApi.Model.Internal.Criterias
         {
             foreach (var selector in _predicateSelectos)
             {
-                Expression<Func<TModel, bool>> predicate = null;
-                var property = selector.Key.PropertyExpression;
-                if (selector.Value.Count() > 1)
+                if (_modelMetadata.Contains(selector.Key))
                 {
-                    if (selector.Key.IsDate)
-                        predicate = BuildDateBetween(selector.Key, selector.Value);
+                    Expression<Func<TModel, bool>> predicate = null;
+                    var property = selector.Key.PropertyExpression;
+                    if (selector.Value.Count() > 1)
+                    {
+                        if (selector.Key.IsDate)
+                            predicate = BuildDateBetween(selector.Key, selector.Value);
+                        else
+                            predicate = BuildContains(selector.Key, selector.Value);
+                    }
                     else
-                        predicate = BuildContains(selector.Key, selector.Value);
-                }
-                else
-                {
-                    var value = selector.Value[0];
-                    predicate = Expression.Lambda<Func<TModel, bool>>(Expression.Equal(property, Expression.Constant(value)), (ParameterExpression)_modelMetadata.InstanceExpression);
-                }
+                    {
+                        var value = selector.Value[0];
+                        predicate = Expression.Lambda<Func<TModel, bool>>(Expression.Equal(property, Expression.Constant(value)), (ParameterExpression)_modelMetadata.InstanceExpression);
+                    }
 
-                query.Query = query.Query.Where(predicate);
+                    query.Query = query.Query.Where(predicate);
+                }
             }
-
         }
 
         private Expression<Func<TModel, bool>> BuildContains(PropertyMetadata meta, object[] values)

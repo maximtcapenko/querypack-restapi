@@ -21,7 +21,7 @@ namespace QueryPack.RestApi.Extensions
             options?.Invoke(modelOptions);
 
             var registeredTypes = self.AddReadWriteModel<TContext>();
-            self.AddControllersWithViews(options =>
+            var mvcBuilder = self.AddControllersWithViews(options =>
             {
                 options.ModelBinderProviders.Insert(0, new ModelKeyBinderProvider());
                 options.Conventions.Add(new RestModelConvention(modelOptions));
@@ -31,6 +31,8 @@ namespace QueryPack.RestApi.Extensions
             })
               .ConfigureApplicationPartManager(m =>
                     m.FeatureProviders.Add(new RestModelControllerFeatureProvider(typeof(TContext).Assembly, registeredTypes)));
+            
+            modelOptions.MvcBuilderOptions?.Invoke(mvcBuilder);
 
             var criterias = new Type[] { typeof(QueryCriteriaBinder<>), typeof(IncludeCriteriaBinder<>), typeof(OrderByCriteriaBinder<>) };
 
@@ -47,7 +49,6 @@ namespace QueryPack.RestApi.Extensions
             self.AddScoped<DbContext>(s =>
             {
                 var ctx = s.GetRequiredService<TContext>();
-                ctx.Database.EnsureCreated();
                 return ctx;
             });
 

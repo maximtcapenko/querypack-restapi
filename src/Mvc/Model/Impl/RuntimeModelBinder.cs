@@ -4,7 +4,7 @@ namespace QueryPack.RestApi.Mvc.Model.Impl
     using RestApi.Model;
     using RestApi.Model.Internal.Criterias;
 
-    class RuntimeModelBinder<TModel> : IModelBinder
+    internal class RuntimeModelBinder<TModel> : IModelBinder
         where TModel : class
     {
         public Task BindModelAsync(ModelBindingContext bindingContext)
