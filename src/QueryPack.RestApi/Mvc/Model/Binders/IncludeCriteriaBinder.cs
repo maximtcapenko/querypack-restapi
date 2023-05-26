@@ -2,6 +2,7 @@ namespace QueryPack.RestApi.Mvc.Model.Binders
 {
     using Humanizer;
     using Microsoft.AspNetCore.Mvc.ModelBinding;
+    using RestApi.Model.Meta;
     using RestApi.Model.Internal.Criterias;
 
     internal class IncludeCriteriaBinder<TModel> : ICriteriaBinder<TModel>
@@ -14,8 +15,7 @@ namespace QueryPack.RestApi.Mvc.Model.Binders
             var includeResult = WebModelExtensions.GetValue(bindingContext.ValueProvider, IncludeParametrerName);
             if (includeResult != ValueProviderResult.None)
             {
-                var navigations = bindingContext.ModelMetadata.PropertyMetadata
-                                .Where(e => e.IsNavigation && Compare(e, includeResult));
+                var navigations = bindingContext.ModelMetadata.GetNavigations().Where(e => Compare(e, includeResult));
 
                 bindingContext.SetBindingResult(new IncludeCriteria<TModel>(bindingContext.ModelMetadata, navigations));
             }

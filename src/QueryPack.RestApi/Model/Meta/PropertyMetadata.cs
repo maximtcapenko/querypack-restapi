@@ -16,7 +16,7 @@ namespace QueryPack.RestApi.Model.Meta
 
         private readonly PropertyInfo _propertyInfo;
         private readonly IModelMetadataProvider _metadataProvider;
-
+        private readonly Lazy<bool> _isNavigation;
         public ModelMetadata ModelMetadata { get; }
         public Type PropertyType => _propertyInfo.PropertyType;
         public string PropertyName => _propertyInfo.Name;
@@ -25,7 +25,7 @@ namespace QueryPack.RestApi.Model.Meta
         public bool IsPrimitive { get; }
         public bool IsNumber { get; }
         public bool IsDate { get; }
-        public bool IsNavigation => _metadataProvider.GetMetadata(PropertyType) != null;
+        public bool IsNavigation => _isNavigation.Value;
         public bool IsReadOnly => _propertyInfo.CanWrite;
         public bool IsIgnored { get; }
         public IValueGetter ValueGetter { get; }
@@ -42,6 +42,7 @@ namespace QueryPack.RestApi.Model.Meta
             IsPrimitive = ResolveIsPrimitive(propertyInfo);
             IsIgnored = ResolveIsIgnored(propertyInfo);
             IsDate = ResolveIsDate(propertyInfo);
+            _isNavigation = new Lazy<bool>(() => ResolveNavigation(propertyInfo, metadataProvider));
             var buildGetter = GetType().GetMethod(nameof(BuildAccessors), BindingFlags.Static | BindingFlags.NonPublic);
             var accessors = (Accessors)buildGetter.MakeGenericMethod(modelMetadata.ModelType, PropertyType)
                 .Invoke(null, new object[] { propertyInfo, PropertyExpression, modelMetadata.InstanceExpression });
@@ -50,15 +51,28 @@ namespace QueryPack.RestApi.Model.Meta
             ValueSetter = accessors.ValueSetter;
         }
 
+        private bool ResolveNavigation(PropertyInfo property, IModelMetadataProvider metadataProvider)
+        {
+            if (ResolveIsPrimitive(property)) return false;
+
+            Type candidate = null;
+
+            if (property.PropertyType.IsGenericType)
+            {
+                candidate = property.PropertyType.GetGenericArguments().First();
+            }
+            else
+                candidate = property.PropertyType;
+
+            return metadataProvider.GetMetadata(candidate) != null;
+        }
 
         private bool ResolveIsPrimitive(PropertyInfo property)
         {
             bool isPrimitive(Type type) => type.IsPrimitive
                 || type == typeof(string)
                 || type.IsEnum
-                || type == typeof(DateTime)
-                || type == typeof(DateTimeOffset)
-                || type == typeof(TimeSpan);
+                || type.IsValueType;
 
             return isPrimitive(property.PropertyType)
                 || (property.PropertyType.IsGenericType && property.PropertyType.GetGenericTypeDefinition() == typeof(Nullable<>)

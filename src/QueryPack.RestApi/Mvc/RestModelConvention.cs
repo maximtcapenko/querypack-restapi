@@ -24,7 +24,7 @@ namespace QueryPack.RestApi.Mvc
                 var genericType = controller.ControllerType.GenericTypeArguments[0];
                 var customNameAttribute = genericType.GetCustomAttribute<RestApiAttribute>();
                 var route = string.IsNullOrEmpty(customNameAttribute?.Route) == true 
-                    ? $"{resolvePrefix(_options.GlobalPrefix)}/{genericType.Name.Pluralize().Kebaberize()}" : customNameAttribute?.Route;
+                    ? $"{resolvePrefix(_options.GlobalApiPrefix)}/{genericType.Name.Pluralize().Kebaberize()}" : customNameAttribute?.Route;
 
                 controller.ControllerName = genericType.Name;
                 
