@@ -4,7 +4,6 @@ namespace QueryPack.RestApi.Mvc
     using RestApi.Model;
 
     [ApiController]
-    [Route("[controller]")]
     internal class RestModelController<TModel> : ControllerBase
         where TModel : class
     {
@@ -15,14 +14,15 @@ namespace QueryPack.RestApi.Mvc
             _reader = reader;
         }
 
-        [HttpGet("single")]
+        [HttpGet, Route("single")]
         public Task<TModel> GetAsync([FromQuery] ICriteria<TModel> criteria)
             => _reader.ReadAsync(criteria);
 
+        [HttpGet, Route("")]
         public Task<IEnumerable<TModel>> GetAsync()
             => _reader.ReadAsync();
 
-        [HttpGet("range")]
+        [HttpGet, Route("range")]
         public Task<Range<TModel>> GetRangeAsync([FromQuery] ICriteria<TModel> criteria, [FromQuery] RangeQuery range)
             => _reader.ReadAsync(criteria, range.First, range.Last);
 

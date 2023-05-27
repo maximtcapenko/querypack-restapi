@@ -17,6 +17,7 @@ namespace QueryPack.RestApi.Model.Meta
         private readonly PropertyInfo _propertyInfo;
         private readonly IModelMetadataProvider _metadataProvider;
         private readonly Lazy<bool> _isNavigation;
+        
         public ModelMetadata ModelMetadata { get; }
         public Type PropertyType => _propertyInfo.PropertyType;
         public string PropertyName => _propertyInfo.Name;
