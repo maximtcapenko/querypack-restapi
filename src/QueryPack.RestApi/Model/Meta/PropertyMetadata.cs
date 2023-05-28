@@ -6,7 +6,6 @@ namespace QueryPack.RestApi.Model.Meta
     using System.Reflection;
     using Impl;
     using RestApi.Internal;
-    using Annotations;
 
     public sealed class PropertyMetadata
     {

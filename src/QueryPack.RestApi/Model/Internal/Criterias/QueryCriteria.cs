@@ -1,11 +1,16 @@
 namespace QueryPack.RestApi.Model.Internal.Criterias
 {
     using System.Linq.Expressions;
+    using System.Reflection;
     using Meta;
+    using RestApi.Internal;
 
     internal class QueryCriteria<TModel> : ICriteria<TModel>
         where TModel : class
     {
+        private static MethodInfo _containsMethod = ReflectionUtils.GetContainsMethod();
+        private static MethodInfo _selectMethod = ReflectionUtils.GetSelectMethod();
+
         private readonly Dictionary<PropertyMetadata, object[]> _predicateSelectos;
         private readonly ModelMetadata _modelMetadata;
 
@@ -69,22 +74,16 @@ namespace QueryPack.RestApi.Model.Internal.Criterias
         private Expression<Func<TModel, bool>> BuildContains(PropertyMetadata meta, object[] values)
         {
             var property = meta.PropertyExpression;
-
-            // Get helper methods
-            var contains = typeof(Enumerable).GetMethods().FirstOrDefault(e => e.Name == nameof(Enumerable.Contains)
-               && e.IsStatic && e.GetParameters().Count() == 2);
-            var select = typeof(Enumerable).GetMethods().FirstOrDefault(e => e.Name == nameof(Enumerable.Select)
-                && e.GetParameters().Count() == 2);
             // Make generic
-            var containsGeneric = contains.MakeGenericMethod(meta.PropertyType);
-            var selectGeneric = select.MakeGenericMethod(typeof(object), meta.PropertyType);
+            var contains = _containsMethod.MakeGenericMethod(meta.PropertyType);
+            var select = _selectMethod.MakeGenericMethod(typeof(object), meta.PropertyType);
 
             var objectParameter = Expression.Parameter(typeof(object));
 
-            var selectCall = Expression.Call(null, selectGeneric, Expression.Constant(values),
+            var selectCall = Expression.Call(null, select, Expression.Constant(values),
             Expression.Lambda(Expression.Convert(objectParameter, (meta.PropertyType)), objectParameter));
 
-            return Expression.Lambda<Func<TModel, bool>>(Expression.Call(null, containsGeneric, selectCall, property),
+            return Expression.Lambda<Func<TModel, bool>>(Expression.Call(null, contains, selectCall, property),
                 (ParameterExpression)meta.ModelMetadata.InstanceExpression);
         }
 
@@ -101,7 +100,6 @@ namespace QueryPack.RestApi.Model.Internal.Criterias
                 var less = Expression.LessThanOrEqual(meta.PropertyExpression, Expression.Constant(end));
                 return Expression.Lambda<Func<TModel, bool>>(Expression.And(less, greater),
                     (ParameterExpression)meta.ModelMetadata.InstanceExpression);
-
             }
             else
             {

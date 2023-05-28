@@ -1,8 +1,8 @@
 namespace QueryPack.RestApi.Mvc.Model.Binders
 {
     using Microsoft.AspNetCore.Mvc.ModelBinding;
-    using QueryPack.RestApi.Model.Internal.Criterias;
     using RestApi.Model;
+    using RestApi.Model.Internal.Criterias;
     using RestApi.Model.Meta;
 
     internal class OrderByCriteriaBinder<TModel> : ICriteriaBinder<TModel>
