@@ -1,10 +1,11 @@
 namespace QueryPack.RestApi.Model.Internal.Extensions
 {
+    using System.Collections.Concurrent;
     using System.Linq.Expressions;
     using System.Reflection;
-    using Microsoft.EntityFrameworkCore;
     using Meta;
-    using System.Collections.Concurrent;
+    using Microsoft.EntityFrameworkCore;
+    using RestApi.Internal;
 
     internal static class CriteriaExtensions
     {

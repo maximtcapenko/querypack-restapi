@@ -1,9 +1,9 @@
 namespace QueryPack.RestApi.Mvc
 {
     using System.Reflection;
+    using Configuration;
     using Humanizer;
     using Microsoft.AspNetCore.Mvc.ApplicationModels;
-    using QueryPack.RestApi.Configuration;
     using RestApi.Model;
 
     internal class RestModelConvention : IControllerModelConvention

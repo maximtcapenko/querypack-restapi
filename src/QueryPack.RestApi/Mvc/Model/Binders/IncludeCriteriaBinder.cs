@@ -2,8 +2,8 @@ namespace QueryPack.RestApi.Mvc.Model.Binders
 {
     using Humanizer;
     using Microsoft.AspNetCore.Mvc.ModelBinding;
-    using RestApi.Model.Meta;
     using RestApi.Model.Internal.Criterias;
+    using RestApi.Model.Meta;
 
     internal class IncludeCriteriaBinder<TModel> : ICriteriaBinder<TModel>
           where TModel : class

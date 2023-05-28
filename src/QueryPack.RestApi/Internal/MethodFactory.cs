@@ -1,4 +1,4 @@
-namespace QueryPack.RestApi.Model.Internal
+namespace QueryPack.RestApi.Internal
 {
     using System;
     using System.Linq;
