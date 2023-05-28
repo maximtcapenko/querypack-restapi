@@ -6,6 +6,7 @@ namespace QueryPack.RestApi.Model.Meta
     using System.Reflection;
     using Impl;
     using RestApi.Internal;
+    using Annotations;
 
     public sealed class PropertyMetadata
     {
@@ -17,7 +18,7 @@ namespace QueryPack.RestApi.Model.Meta
         private readonly PropertyInfo _propertyInfo;
         private readonly IModelMetadataProvider _metadataProvider;
         private readonly Lazy<bool> _isNavigation;
-        
+
         public ModelMetadata ModelMetadata { get; }
         public Type PropertyType => _propertyInfo.PropertyType;
         public string PropertyName => _propertyInfo.Name;
@@ -29,8 +30,10 @@ namespace QueryPack.RestApi.Model.Meta
         public bool IsNavigation => _isNavigation.Value;
         public bool IsReadOnly => _propertyInfo.CanWrite;
         public bool IsIgnored { get; }
+        public bool IsCollection { get; }
         public IValueGetter ValueGetter { get; }
         public IValueSetter ValueSetter { get; }
+        public IEnumerable<IAnnotation> Annotations { get; }
 
         public PropertyMetadata(PropertyInfo propertyInfo, ModelMetadata modelMetadata,
             IModelMetadataProvider metadataProvider)
@@ -50,6 +53,8 @@ namespace QueryPack.RestApi.Model.Meta
 
             ValueGetter = accessors.ValueGetter;
             ValueSetter = accessors.ValueSetter;
+
+            Annotations = propertyInfo.GetCustomAttributes().OfType<IAnnotation>();
         }
 
         private bool ResolveNavigation(PropertyInfo property, IModelMetadataProvider metadataProvider)

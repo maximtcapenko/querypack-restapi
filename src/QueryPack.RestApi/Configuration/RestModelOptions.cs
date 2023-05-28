@@ -1,7 +1,6 @@
 namespace QueryPack.RestApi.Configuration
 {
     using System.Text.Json;
-    using Microsoft.EntityFrameworkCore;
 
     public class RestModelOptions
     {
