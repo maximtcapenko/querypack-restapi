@@ -22,7 +22,9 @@ namespace QueryPack.RestApi.Model.Internal.Criterias
                 if (_modelMetadata.Contains(selector.Key))
                 {
                     Expression<Func<TModel, bool>> predicate = null;
-                    var property = selector.Key.PropertyExpression;
+                    var propertyExpression = selector.Key.PropertyExpression;
+                    var queryAnnotations = selector.Key.Annotations;
+
                     if (selector.Value.Count() > 1)
                     {
                         if (selector.Key.IsDate)
@@ -33,7 +35,30 @@ namespace QueryPack.RestApi.Model.Internal.Criterias
                     else
                     {
                         var value = selector.Value[0];
-                        predicate = Expression.Lambda<Func<TModel, bool>>(Expression.Equal(property, Expression.Constant(value)), (ParameterExpression)_modelMetadata.InstanceExpression);
+                        Expression defaultPredicateExpression = Expression.Equal(propertyExpression, Expression.Constant(value));
+                        
+                        if (queryAnnotations.Any())
+                        {
+                            var annotationContext = new QueryAnnotationContext(selector.Key, value);
+                            foreach (var annotation in queryAnnotations)
+                                annotation.Apply(annotationContext);
+
+                            Expression resultAnnotationExpression = null;
+                            foreach (var annotationExpression in annotationContext.GetAnnotationExpressions())
+                            {
+                                if (resultAnnotationExpression == null)
+                                    resultAnnotationExpression = annotationExpression;
+                                else
+                                    resultAnnotationExpression = Expression.And(resultAnnotationExpression, annotationExpression);
+                            }
+
+                            if(resultAnnotationExpression == null)
+                                resultAnnotationExpression = defaultPredicateExpression;
+
+                            predicate = Expression.Lambda<Func<TModel, bool>>(resultAnnotationExpression, (ParameterExpression)_modelMetadata.InstanceExpression);
+                        }
+                        else
+                            predicate = Expression.Lambda<Func<TModel, bool>>(defaultPredicateExpression, (ParameterExpression)_modelMetadata.InstanceExpression);
                     }
 
                     query.Query = query.Query.Where(predicate);
@@ -82,6 +107,28 @@ namespace QueryPack.RestApi.Model.Internal.Criterias
             {
                 return Expression.Lambda<Func<TModel, bool>>(greater, (ParameterExpression)meta.ModelMetadata.InstanceExpression);
             }
+        }
+
+        class QueryAnnotationContext : IAnnotationContext
+        {
+            private List<Expression> _annotationExpressions = new List<Expression>();
+
+            public PropertyMetadata PropertyMetadata { get; }
+
+            public object Input { get; }
+
+            public QueryAnnotationContext(PropertyMetadata propertyMetadata, object input)
+            {
+                PropertyMetadata = propertyMetadata;
+                Input = input;
+            }
+
+            public void SetResult(Expression annotationExpression)
+            {
+                _annotationExpressions.Add(annotationExpression);
+            }
+
+            public IEnumerable<Expression> GetAnnotationExpressions() => _annotationExpressions;
         }
     }
 }

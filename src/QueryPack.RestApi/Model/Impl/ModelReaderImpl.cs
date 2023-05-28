@@ -31,7 +31,6 @@ namespace QueryPack.RestApi.Model.Impl
 
         public async Task<Range<TModel>> ReadAsync(ICriteria<TModel> criteria, int first, int last)
         {
-            var count = await _dbContext.Set<TModel>().CountAsync();
             var set = _dbContext.Set<TModel>();
 
             var container = new ModelReadQueryContainer(set);
@@ -46,6 +45,8 @@ namespace QueryPack.RestApi.Model.Impl
                 : query;
 
             var results = await rangeQuery.ToListAsync();
+            var count = await query.CountAsync();
+
             return new Range<TModel>(first, last, results, count);
         }
 
