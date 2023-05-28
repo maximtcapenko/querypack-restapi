@@ -4,7 +4,6 @@ namespace QueryPack.RestApi.Configuration
 
     public class RestModelOptions
     {
-        public bool UseAnnotationRestrictions { get; set; }
         public Action<IMvcBuilder> MvcBuilderOptions { get; set; }
         public string GlobalApiPrefix { get; set; }
         public Action<JsonSerializerOptions> SerializerOptions { get; set; }
