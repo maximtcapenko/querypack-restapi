@@ -7,16 +7,16 @@ namespace QueryPack.RestApi.Model.Annotations
     [AttributeUsage(AttributeTargets.Property)]
     public class TextSearchAttribute : Attribute, IAnnotation
     {
-        private static readonly MethodInfo LikeMethodInfo = typeof(String).GetMethod(nameof(String.StartsWith),
+        private static readonly MethodInfo _likeMethod = typeof(String).GetMethod(nameof(String.StartsWith),
              new[] {typeof(string)});
 
         public void Apply(IAnnotationContext context)
         {
             // check if property type is string
-            if(context.PropertyMetadata.PropertyType != typeof(string))
+            if(context.PropertyType != typeof(string) && context.Input.GetType() != typeof(string))
                 return;
 
-            var likeCallExpression = Expression.Call(context.PropertyMetadata.PropertyExpression, LikeMethodInfo, Expression.Constant(context.Input));
+            var likeCallExpression = Expression.Call(context.PropertyExpression, _likeMethod, Expression.Constant(context.Input));
             context.SetResult(likeCallExpression);
         }
     }

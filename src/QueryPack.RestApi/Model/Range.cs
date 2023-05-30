@@ -11,11 +11,9 @@ namespace QueryPack.RestApi.Model
         }
 
         public IEnumerable<TModel> Results { get; }
-
+        public int ResultCount => Results.Count();
         public int TotalCount { get; set; }
-
         public int First { get; }
-
         public int Last { get; }
     }
 }

@@ -1,5 +1,6 @@
 namespace QueryPack.RestApi.Mvc.Model
 {
+    using System.ComponentModel;
     using System.Reflection;
     using System.Runtime.Serialization;
     using Humanizer;
@@ -62,7 +63,7 @@ namespace QueryPack.RestApi.Mvc.Model
         {
             try
             {
-                result = Convert.ChangeType(value, type);
+                result = TypeDescriptor.GetConverter(type).ConvertFromString(value);
                 return true;
             }
             catch

@@ -1,8 +1,8 @@
-using QueryPack.RestApi.Extensions;
-using QueryPack.RestApi.Example.Models;
 using System.Text.Json.Serialization;
-using QueryPack.RestApi.Example.Tasks;
+using QueryPack.RestApi.Example.Models;
 using QueryPack.RestApi.Example.Swagger;
+using QueryPack.RestApi.Example.Tasks;
+using QueryPack.RestApi.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
