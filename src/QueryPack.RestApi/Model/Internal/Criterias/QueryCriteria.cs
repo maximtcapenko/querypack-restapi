@@ -41,16 +41,16 @@ namespace QueryPack.RestApi.Model.Internal.Criterias
                     }
                     else if (selector.Key.IsNavigation)
                     {
-                        resultExpressionPredicate = BuildNavigationSearch(selector.Key, selector.Value);
+                        resultExpressionPredicate = BuildNavigationPredicate(selector.Key, selector.Value);
                     }
                     else
                     {
                         if (selector.Value.Count() > 1)
                         {
                             if (selector.Key.IsDate)
-                                resultExpressionPredicate = BuildDateBetween(selector.Key, selector.Value);
+                                resultExpressionPredicate = BuildDateBetween(selector.Key.PropertyExpression, selector.Value);
                             else
-                                resultExpressionPredicate = BuildContains(selector.Key, selector.Value);
+                                resultExpressionPredicate = BuildContains(selector.Key.PropertyExpression, selector.Value);
                         }
                         else
                         {
@@ -67,39 +67,37 @@ namespace QueryPack.RestApi.Model.Internal.Criterias
             }
         }
 
-        private Expression BuildContains(PropertyMetadata meta, IEnumerable<object> values)
+        private static Expression BuildContains(Expression propertyExpression, IEnumerable<object> values)
         {
-            var property = meta.PropertyExpression;
             // Make generic
-            var contains = _containsMethod.MakeGenericMethod(meta.PropertyType);
-            var select = _selectMethod.MakeGenericMethod(typeof(object), meta.PropertyType);
+            var contains = _containsMethod.MakeGenericMethod(ExpressionUtils.GetMemberType(propertyExpression));
+            var select = _selectMethod.MakeGenericMethod(typeof(object), ExpressionUtils.GetMemberType(propertyExpression));
 
             var objectParameter = Expression.Parameter(typeof(object));
 
             var selectCall = Expression.Call(null, select, Expression.Constant(values),
-            Expression.Lambda(Expression.Convert(objectParameter, (meta.PropertyType)), objectParameter));
+            Expression.Lambda(Expression.Convert(objectParameter, ExpressionUtils.GetMemberType(propertyExpression)), objectParameter));
 
-            return Expression.Call(null, contains, selectCall, property);
+            return Expression.Call(null, contains, selectCall, propertyExpression);
         }
 
-        private Expression BuildDateBetween(PropertyMetadata meta, IEnumerable<object> values)
+        private static Expression BuildDateBetween(Expression propertyExpression, IEnumerable<object> values)
         {
-            var property = meta.PropertyExpression;
             // take the  minimal and maximum dates
             var start = values.Min();
             var end = values.Max();
 
-            var greater = Expression.GreaterThan(meta.PropertyExpression, Expression.Constant(start));
+            var greater = Expression.GreaterThan(propertyExpression, Expression.Constant(start));
             if (start != end)
             {
-                var less = Expression.LessThanOrEqual(meta.PropertyExpression, Expression.Constant(end));
+                var less = Expression.LessThanOrEqual(propertyExpression, Expression.Constant(end));
                 return Expression.And(less, greater);
             }
             else
                 return greater;
         }
 
-        private Expression ProcessAnnotations(PropertyMetadata propertyMetadata, QueryAnnotationContext annotationContext)
+        private static Expression ProcessAnnotations(PropertyMetadata propertyMetadata, QueryAnnotationContext annotationContext)
         {
             Expression resultAnnotationExpression = null;
 
@@ -110,22 +108,21 @@ namespace QueryPack.RestApi.Model.Internal.Criterias
             {
                 resultAnnotationExpression = And(resultAnnotationExpression, annotationExpression);
             }
-            
+
             if (resultAnnotationExpression == null)
                 throw new NotImplementedException($"Property {propertyMetadata.PropertyName} is annotated but annotations are not implemented");
 
             return resultAnnotationExpression;
         }
 
-        private Expression BuildNavigationSearch(PropertyMetadata meta, object inputObject)
+        private static Expression BuildNavigationPredicate(PropertyMetadata meta, IEnumerable<object> inputObject)
         {
-            var input = ((IEnumerable<object>)inputObject).OfType<Dictionary<string, IEnumerable<object>>>();
+            var input = inputObject.OfType<Dictionary<string, IEnumerable<object>>>();
             Expression resultExpressionPredicate = null;
 
             foreach (var item in input.First())
             {
                 var key = item.Key;
-                var value = item.Value.First();
 
                 var member = GetMemberExpressionFromPath(key,
                     (ParameterExpression)meta.ModelMetadata.InstanceExpression);
@@ -134,19 +131,30 @@ namespace QueryPack.RestApi.Model.Internal.Criterias
                 var containerModelMetadata = meta.GetModelMetadataProvider().GetMetadata(declaredType);
                 var propertyMetadata = containerModelMetadata.GetProperty(member.Member);
 
-                Expression defaultResultExpression = Expression.Equal(member, Expression.Constant(value));
-
-                if (propertyMetadata.Annotations.Count() > 0)
+                if (item.Value.Count() > 1)
                 {
-                    var annotationContext = new QueryAnnotationContext(meta.ModelMetadata, meta.GetModelMetadataProvider(),
-                     member, propertyMetadata.PropertyType, value);
-
-                    var resultAnnotationExpression = ProcessAnnotations(propertyMetadata, annotationContext);
-                    resultExpressionPredicate = And(resultExpressionPredicate, resultAnnotationExpression);
+                    if (propertyMetadata.IsDate)
+                        resultExpressionPredicate = BuildDateBetween(member, item.Value);
+                    else
+                        resultExpressionPredicate = BuildContains(member, item.Value);
                 }
                 else
                 {
-                    resultExpressionPredicate = And(resultExpressionPredicate, defaultResultExpression);
+                    var value = item.Value.First();
+                    Expression defaultResultExpression = Expression.Equal(member, Expression.Constant(value));
+
+                    if (propertyMetadata.Annotations.Count() > 0)
+                    {
+                        var annotationContext = new QueryAnnotationContext(meta.ModelMetadata, meta.GetModelMetadataProvider(),
+                         member, propertyMetadata.PropertyType, value);
+
+                        var resultAnnotationExpression = ProcessAnnotations(propertyMetadata, annotationContext);
+                        resultExpressionPredicate = And(resultExpressionPredicate, resultAnnotationExpression);
+                    }
+                    else
+                    {
+                        resultExpressionPredicate = And(resultExpressionPredicate, defaultResultExpression);
+                    }
                 }
             }
 

@@ -3,7 +3,6 @@ namespace QueryPack.RestApi.Mvc.Model.Binders
     using Microsoft.AspNetCore.Mvc.ModelBinding;
     using RestApi.Model.Meta;
     using RestApi.Model.Internal.Criterias;
-    using System.Linq.Expressions;
 
     internal class QueryCriteriaBinder<TModel> : ICriteriaBinder<TModel>
           where TModel : class
@@ -22,8 +21,11 @@ namespace QueryPack.RestApi.Mvc.Model.Binders
             {
                 if (meta.IsNavigation)
                 {
-                    var result = ResolveParameterValues(bindingContext, meta, new List<PropertyMetadata>(), new List<PropertyMetadata>());
-                    criteriaKeys[meta] = new List<object> { result };
+                    var results = new Dictionary<string, IEnumerable<object>>();
+                    if (!ResolveParameterValues(bindingContext, meta, new List<PropertyMetadata>(), new List<PropertyMetadata>(), results))
+                        return;
+
+                    criteriaKeys[meta] = new List<object> { results };
                 }
                 else
                 {
@@ -80,11 +82,41 @@ namespace QueryPack.RestApi.Mvc.Model.Binders
 
             return true;
         }
+        private bool TryFill(ICriteriaBindingContext<TModel> bindingContext,
+                   string propertyName, Type propertyType, ValueProviderResult valueProviderResult,
+                   Dictionary<string, IEnumerable<object>> results)
+        {
+            var values = new List<object>(valueProviderResult.Count());
 
-        private Dictionary<string, IEnumerable<object>> ResolveParameterValues(
+            foreach (var value in valueProviderResult)
+            {
+                if (propertyType.IsEnum)
+                {
+                    if (propertyType.TryConvertEnum(value, out var parameterValue))
+                        values.Add(parameterValue);
+                }
+                else
+                {
+                    if (propertyType.TryConvert(value, out var parameterValue))
+                        values.Add(parameterValue);
+                }
+            }
+            
+            if (values.Count() == 0 || values.Count() != valueProviderResult.Count())
+            {
+                bindingContext.TryAddModelError(propertyName, valueProviderResult);
+                return false;
+            }
+
+            results[propertyName] = values;
+
+            return true;
+        }
+
+        private bool ResolveParameterValues(
             ICriteriaBindingContext<TModel> bindingContext,
             PropertyMetadata propertyMetadata,
-            List<PropertyMetadata> parent, List<PropertyMetadata> visited)
+            List<PropertyMetadata> parent, List<PropertyMetadata> visited, Dictionary<string, IEnumerable<object>> results)
         {
             visited.Add(propertyMetadata);
 
@@ -92,8 +124,6 @@ namespace QueryPack.RestApi.Mvc.Model.Binders
 
             var metadataProvider = propertyMetadata.GetModelMetadataProvider();
             var modelMeta = metadataProvider.GetMetadata(propertyMetadata.PropertyType);
-
-            var results = new Dictionary<string, IEnumerable<object>>();
 
             if (modelMeta != null)
                 foreach (var propertyMeta in modelMeta.PropertyMetadata)
@@ -106,25 +136,27 @@ namespace QueryPack.RestApi.Mvc.Model.Binders
                         current.AddRange(parent);
                         current.Add(propertyMeta);
 
-                        var nesteds = ResolveParameterValues(bindingContext, propertyMeta, current, visited);
-                        foreach (var nested in nesteds)
-                        {
-                            results.Add($"{nested.Key}", nested.Value);
-                        }
+                        if (!ResolveParameterValues(bindingContext, propertyMeta, current, visited, results))
+                            return false;
                     }
                     else
                     {
+                        var key = string.Format("{0}.{1}", string.Join(".", parent.Select(e => e.PropertyName)), propertyMeta.PropertyName);
                         var result = WebModelExtensions.GetValue(bindingContext.ValueProvider, "{0}.{1}", string.Join(".", parent.Select(e => e.PropertyName)), propertyMeta.PropertyName);
                         if (result != ValueProviderResult.None)
                         {
-                            var tmp = new Dictionary<PropertyMetadata, IEnumerable<object>>();
-                            TryFill(bindingContext, propertyMeta, result, tmp);
-                            results.Add(string.Format("{0}.{1}", string.Join(".", parent.Select(e => e.PropertyName)), propertyMeta.PropertyName), tmp[propertyMeta]);
+                            bindingContext.SetModelValue(key, result);
+
+                            var tmp = new Dictionary<string, IEnumerable<object>>();
+                            if (!TryFill(bindingContext, key, propertyMeta.PropertyType, result, tmp))
+                                return false;
+
+                            results.Add(key, tmp[key]);
                         }
                     }
                 }
 
-            return results;
+            return true;
         }
     }
 }
