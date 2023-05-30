@@ -5,6 +5,14 @@ namespace QueryPack.RestApi.Internal
 
     internal class ExpressionUtils
     {
+        internal static Type GetMemberType(Expression candidateExpression)
+             => (candidateExpression as MemberExpression).Member switch
+             {
+                 PropertyInfo p => p.PropertyType,
+                 FieldInfo f => f.FieldType,
+                 _ => throw new NotSupportedException()
+             };
+
         internal static Action<TEntity, TProperty> CreateSetter<TEntity, TProperty>(Expression propertyExpression,
             Expression instanceExpression)
         {

@@ -1,5 +1,7 @@
 namespace QueryPack.RestApi.Example.Models
 {
+    using Model.Annotations;
+
     public class Version
     {
         public Guid Id { get; set; }

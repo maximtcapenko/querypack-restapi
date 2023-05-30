@@ -4,7 +4,10 @@ namespace QueryPack.RestApi.Model.Meta
 
     public interface IAnnotationContext
     {
-        PropertyMetadata PropertyMetadata { get; }
+        ModelMetadata ModelMetadata { get; }
+        IModelMetadataProvider ModelMetadataProvider { get; }
+        MemberExpression PropertyExpression { get; set; }
+        Type PropertyType { get; set; }
         object Input { get; }
         void SetResult(Expression annotationExpression);
     }

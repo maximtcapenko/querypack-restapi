@@ -56,6 +56,8 @@ namespace QueryPack.RestApi.Model.Meta
             Annotations = propertyInfo.GetCustomAttributes().OfType<IAnnotation>();
         }
 
+        public IModelMetadataProvider GetModelMetadataProvider() => _metadataProvider;
+
         private bool ResolveNavigation(PropertyInfo property, IModelMetadataProvider metadataProvider)
         {
             if (ResolveIsPrimitive(property)) return false;
