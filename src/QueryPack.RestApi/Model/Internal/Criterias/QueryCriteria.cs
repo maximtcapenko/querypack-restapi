@@ -129,6 +129,8 @@ namespace QueryPack.RestApi.Model.Internal.Criterias
 
                 var declaredType = member.Member.DeclaringType;
                 var containerModelMetadata = meta.GetModelMetadataProvider().GetMetadata(declaredType);
+                ArgumentNullException.ThrowIfNull(containerModelMetadata, $"Type {declaredType.FullName} is not registered in metadata container");
+
                 var propertyMetadata = containerModelMetadata.GetProperty(member.Member);
 
                 if (item.Value.Count() > 1)

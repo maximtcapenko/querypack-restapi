@@ -17,33 +17,36 @@ namespace QueryPack.RestApi.Mvc.Model.Binders
             var modelMeta = bindingContext.ModelMetadata;
             var criteriaKeys = new Dictionary<PropertyMetadata, IEnumerable<object>>();
 
-            foreach (var meta in modelMeta.PropertyMetadata)
+            foreach (var propertyMetadata in modelMeta.PropertyMetadata)
             {
-                if (meta.IsNavigation)
+                if (propertyMetadata.IsNavigation)
                 {
                     var results = new Dictionary<string, IEnumerable<object>>();
-                    if (!ResolveParameterValues(bindingContext, meta, new List<PropertyMetadata>(), new List<PropertyMetadata>(), results))
+                    if (!ResolveParameterValues(bindingContext, propertyMetadata, new List<PropertyMetadata>(), new List<PropertyMetadata>(), results))
                         return;
 
-                    criteriaKeys[meta] = new List<object> { results };
+                    criteriaKeys[propertyMetadata] = new List<object> { results };
                 }
                 else
                 {
-                    var result = WebModelExtensions.GetValue(bindingContext.ValueProvider, meta.PropertyName);
+                    var result = WebModelExtensions.GetValue(bindingContext.ValueProvider, propertyMetadata.PropertyName);
                     if (result != ValueProviderResult.None)
                     {
-                        bindingContext.SetModelValue(meta.PropertyName, result);
+                        bindingContext.SetModelValue(propertyMetadata.PropertyName, result);
 
                         if (string.IsNullOrEmpty(result.FirstValue))
                         {
-                            bindingContext.TryAddModelError(meta.PropertyName, result);
+                            bindingContext.TryAddModelError(propertyMetadata.PropertyName, result);
 
                             return;
                         }
                         else
                         {
-                            if (!TryFill(bindingContext, meta, result, criteriaKeys))
+                            var values = new List<object>();
+                            if (!TryFill(bindingContext, propertyMetadata.PropertyName, propertyMetadata.PropertyType, result, values))
                                 return;
+
+                            criteriaKeys[propertyMetadata] = values;
                         }
                     }
                 }
@@ -53,38 +56,8 @@ namespace QueryPack.RestApi.Mvc.Model.Binders
         }
 
         private bool TryFill(ICriteriaBindingContext<TModel> bindingContext,
-            PropertyMetadata propertyMetadata, ValueProviderResult valueProviderResult,
-            Dictionary<PropertyMetadata, IEnumerable<object>> results)
-        {
-            var values = new List<object>(valueProviderResult.Count());
-
-            foreach (var value in valueProviderResult)
-            {
-                if (propertyMetadata.PropertyType.IsEnum)
-                {
-                    if (propertyMetadata.PropertyType.TryConvertEnum(value, out var parameterValue))
-                        values.Add(parameterValue);
-                }
-                else
-                {
-                    if (propertyMetadata.PropertyType.TryConvert(value, out var parameterValue))
-                        values.Add(parameterValue);
-                }
-
-                if (values.Count() == 0 || values.Count() != valueProviderResult.Count())
-                {
-                    bindingContext.TryAddModelError(propertyMetadata.PropertyName, valueProviderResult);
-                    return false;
-                }
-
-                results[propertyMetadata] = values;
-            }
-
-            return true;
-        }
-        private bool TryFill(ICriteriaBindingContext<TModel> bindingContext,
                    string propertyName, Type propertyType, ValueProviderResult valueProviderResult,
-                   Dictionary<string, IEnumerable<object>> results)
+                    List<object> results)
         {
             var values = new List<object>(valueProviderResult.Count());
 
@@ -108,7 +81,7 @@ namespace QueryPack.RestApi.Mvc.Model.Binders
                 return false;
             }
 
-            results[propertyName] = values;
+            results.AddRange(values);
 
             return true;
         }
@@ -147,11 +120,11 @@ namespace QueryPack.RestApi.Mvc.Model.Binders
                         {
                             bindingContext.SetModelValue(key, result);
 
-                            var tmp = new Dictionary<string, IEnumerable<object>>();
+                            var tmp = new List<object>();
                             if (!TryFill(bindingContext, key, propertyMeta.PropertyType, result, tmp))
                                 return false;
 
-                            results.Add(key, tmp[key]);
+                            results.Add(key, tmp);
                         }
                     }
                 }
