@@ -73,7 +73,8 @@ namespace QueryPack.RestApi.Extensions
         internal static void RegisterModel<T>(IServiceCollection services)
             where T : class
         {
-            services.AddScoped<IModelReader<T>, ModelReaderImpl<T>>();
+            services.AddScoped<IModelReader<T>, ModelReaderImpl<T>>()
+                    .AddScoped<IModelWriter<T>, ModelWriterImpl<T>>();
         }
     }
 }
