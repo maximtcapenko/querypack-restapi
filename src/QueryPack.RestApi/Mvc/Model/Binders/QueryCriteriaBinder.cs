@@ -25,7 +25,8 @@ namespace QueryPack.RestApi.Mvc.Model.Binders
                     if (!ResolveParameterValues(bindingContext, propertyMetadata, new List<PropertyMetadata>(), new List<PropertyMetadata>(), results))
                         return;
 
-                    criteriaKeys[propertyMetadata] = new List<object> { results };
+                    if (results.Any())
+                        criteriaKeys[propertyMetadata] = new List<object> { results };
                 }
                 else
                 {
@@ -74,7 +75,7 @@ namespace QueryPack.RestApi.Mvc.Model.Binders
                         values.Add(parameterValue);
                 }
             }
-            
+
             if (values.Count() == 0 || values.Count() != valueProviderResult.Count())
             {
                 bindingContext.TryAddModelError(propertyName, valueProviderResult);
@@ -99,6 +100,7 @@ namespace QueryPack.RestApi.Mvc.Model.Binders
             var modelMeta = metadataProvider.GetMetadata(propertyMetadata.PropertyType);
 
             if (modelMeta != null)
+            {
                 foreach (var propertyMeta in modelMeta.PropertyMetadata)
                 {
                     if (visited.Contains(propertyMeta)) continue;
@@ -128,6 +130,7 @@ namespace QueryPack.RestApi.Mvc.Model.Binders
                         }
                     }
                 }
+            }
 
             return true;
         }
