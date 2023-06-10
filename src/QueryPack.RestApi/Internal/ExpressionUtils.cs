@@ -2,9 +2,32 @@ namespace QueryPack.RestApi.Internal
 {
     using System.Linq.Expressions;
     using System.Reflection;
+    using System.Text;
 
     internal class ExpressionUtils
     {
+        internal static string GetMemberPath(MemberExpression memberExpression)
+        {
+            var path = new List<string>();
+            do
+            {
+                var memberName = memberExpression.Member.Name;
+                path.Add(memberName);
+                memberExpression = memberExpression.Expression as MemberExpression;
+            }
+            while (memberExpression != null);
+
+            var sb = new StringBuilder();
+            var i = path.Count - 1;
+            for (; i > 0; --i)
+            {
+                sb.Append(path[i]);
+                sb.Append('.');
+            }
+            sb.Append(path[i]);
+            return sb.ToString();
+        }
+        
         internal static Type GetMemberType(Expression candidateExpression)
              => (candidateExpression as MemberExpression).Member switch
              {

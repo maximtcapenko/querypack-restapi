@@ -14,6 +14,8 @@ namespace QueryPack.RestApi.Model.Meta
 
         public Expression InstanceExpression { get; }
 
+        public Func<object> InstanceFactory { get; }
+
         internal ModelMetadata(Type modelType, IModelMetadataProvider metadataProvider)
         {
             ModelType = modelType;
@@ -21,7 +23,8 @@ namespace QueryPack.RestApi.Model.Meta
 
             PropertyMetadata = propertyMeta;
             InstanceExpression = Expression.Parameter(modelType);
-            
+            InstanceFactory = Expression.Lambda<Func<object>>(Expression.New(modelType)).Compile();
+
             foreach (var property in modelType.GetProperties())
             {
                 propertyMeta.Add(new PropertyMetadata(property, this, metadataProvider));
