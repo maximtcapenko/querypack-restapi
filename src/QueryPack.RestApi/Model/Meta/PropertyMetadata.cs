@@ -27,7 +27,7 @@ namespace QueryPack.RestApi.Model.Meta
         public bool IsNumber { get; }
         public bool IsDate { get; }
         public bool IsNavigation => _isNavigation.Value;
-        public bool IsReadOnly => _propertyInfo.CanWrite;
+        public bool IsReadOnly => !_propertyInfo.CanWrite;
         public bool IsIgnored { get; }
         public bool IsCollection { get; }
         public IValueGetter ValueGetter { get; }
@@ -45,6 +45,7 @@ namespace QueryPack.RestApi.Model.Meta
             IsPrimitive = ResolveIsPrimitive(propertyInfo);
             IsIgnored = ResolveIsIgnored(propertyInfo);
             IsDate = ResolveIsDate(propertyInfo);
+            IsCollection = _propertyInfo.PropertyType.IsAssignableTo(typeof(System.Collections.IEnumerable));
             _isNavigation = new Lazy<bool>(() => ResolveNavigation(propertyInfo, metadataProvider));
             var buildGetter = GetType().GetMethod(nameof(BuildAccessors), BindingFlags.Static | BindingFlags.NonPublic);
             var accessors = (Accessors)buildGetter.MakeGenericMethod(modelMetadata.ModelType, PropertyType)

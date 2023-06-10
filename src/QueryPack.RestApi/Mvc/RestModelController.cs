@@ -20,7 +20,7 @@ namespace QueryPack.RestApi.Mvc
 
         [HttpPost, Route("")]
         [KeysResultFilter]
-        public async Task<TModel> CreateAsync(TModel model)
+        public async Task<TModel> ModifyAsync(TModel model)
         {
             await _writer.WriteAsync(model);
             return model;
@@ -37,6 +37,5 @@ namespace QueryPack.RestApi.Mvc
         [HttpGet, Route("range")]
         public Task<Range<TModel>> GetRangeAsync([FromQuery] ICriteria<TModel> criteria, [FromQuery] RangeQuery range)
             => _reader.ReadAsync(criteria, range.First, range.Last);
-
     }
 }
