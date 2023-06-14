@@ -1,7 +1,9 @@
 namespace QueryPack.RestApi.Extensions
 {
+    using System.Reflection;
     using Configuration;
     using Microsoft.EntityFrameworkCore;
+    using Microsoft.EntityFrameworkCore.Scaffolding;
     using Model;
     using Model.Impl;
     using Model.Meta;
@@ -10,6 +12,7 @@ namespace QueryPack.RestApi.Extensions
     using Mvc.Model;
     using Mvc.Model.Binders;
     using Mvc.Model.Impl;
+    using Internal;
 
     public static class ServiceCollectionExtensions
     {
@@ -31,7 +34,7 @@ namespace QueryPack.RestApi.Extensions
             })
               .ConfigureApplicationPartManager(m =>
                     m.FeatureProviders.Add(new RestModelControllerFeatureProvider(typeof(TContext).Assembly, registeredTypes)));
-            
+
             modelOptions.MvcBuilderOptions?.Invoke(mvcBuilder);
 
             var criterias = new Type[] { typeof(QueryCriteriaBinder<>), typeof(IncludeCriteriaBinder<>), typeof(OrderByCriteriaBinder<>) };
@@ -40,6 +43,42 @@ namespace QueryPack.RestApi.Extensions
                 new RuntimeCriteriaBinderProvider(criterias.Concat(modelOptions.Criterias).ToArray()));
 
             return self;
+        }
+
+        public static IServiceCollection AddRestModel(this IServiceCollection self, 
+            IScaffoldService scaffolder, Action<RestModelOptions> options = default)
+        {
+            var scaffoldedContextClassName = "ScaffoldedContext";
+            var rootNamesapce = "QueryPack.RestApi.Model.Models";
+
+            var modelCodeGenerationOptions = new ModelCodeGenerationOptions
+            {
+                RootNamespace = rootNamesapce,
+                ContextName = scaffoldedContextClassName,
+                ContextNamespace = rootNamesapce,
+                ModelNamespace = rootNamesapce,
+                UseDataAnnotations = true,
+                SuppressConnectionStringWarning = true,
+            };
+
+            var scaffoldedModel = scaffolder.ScaffoldModel(modelCodeGenerationOptions);
+            var referencedAssemblies = scaffolder.GetType().Assembly.GetReferencedAssemblies()
+                           .Select(a => Assembly.Load(a));
+
+            var dynamicContextAssembly = CSharpCompilationUtils.Compile(scaffoldedModel.AdditionalFiles.Select(e => e.Code).Concat(new[] { scaffoldedModel.ContextFile.Code }),
+                 referencedAssemblies.ToArray());
+
+            var dynamicContext = GetContext(dynamicContextAssembly, rootNamesapce, scaffoldedContextClassName);
+
+            AddRestModelInternal(dynamicContext, self, options);
+
+            return self;
+        }
+
+        internal static void AddRestModelInternal<TContext>(TContext context, IServiceCollection services, Action<RestModelOptions> options)
+            where TContext : DbContext
+        {
+            services.AddRestModel<TContext>(options);
         }
 
         internal static IEnumerable<Type> AddReadWriteModel<TContext>(this IServiceCollection self)
@@ -75,6 +114,17 @@ namespace QueryPack.RestApi.Extensions
         {
             services.AddScoped<IModelReader<T>, ModelReaderImpl<T>>()
                     .AddScoped<IModelWriter<T>, ModelWriterImpl<T>>();
+        }
+
+        internal static DbContext GetContext(Assembly assembly, string rootNamesapce, string contextClassName)
+        {
+            var type = assembly.GetType($"{rootNamesapce}.{contextClassName}");
+            _ = type ?? throw new Exception("DataContext type not found");
+
+            var constr = type.GetConstructor(Type.EmptyTypes);
+            _ = constr ?? throw new Exception("DataContext ctor not found");
+
+            return (DbContext)constr.Invoke(null);
         }
     }
 }
