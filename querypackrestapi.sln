@@ -7,7 +7,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{85747995-5AF
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QueryPack.RestApi", "src\QueryPack.RestApi\QueryPack.RestApi.csproj", "{5CB47F61-1A3F-466E-BC7B-E0FA30E3986C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QueryPack.RestApi.Example", "src\QueryPack.RestApi.Example\QueryPack.RestApi.Example.csproj", "{46B6E175-4986-45D9-A720-C9171E10CCAD}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QueryPack.RestApi.CodeFirstExample", "src\QueryPack.RestApi.CodeFirstExample\QueryPack.RestApi.CodeFirstExample.csproj", "{46B6E175-4986-45D9-A720-C9171E10CCAD}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QueryPack.RestApi.DbFirstExample", "src\QueryPack.RestApi.DbFirstExample\QueryPack.RestApi.DbFirstExample.csproj", "{D0250D43-CC56-4EE2-8CEF-B147F6BABFFD}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -26,9 +28,14 @@ Global
 		{46B6E175-4986-45D9-A720-C9171E10CCAD}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{46B6E175-4986-45D9-A720-C9171E10CCAD}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{46B6E175-4986-45D9-A720-C9171E10CCAD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D0250D43-CC56-4EE2-8CEF-B147F6BABFFD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D0250D43-CC56-4EE2-8CEF-B147F6BABFFD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D0250D43-CC56-4EE2-8CEF-B147F6BABFFD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D0250D43-CC56-4EE2-8CEF-B147F6BABFFD}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{5CB47F61-1A3F-466E-BC7B-E0FA30E3986C} = {85747995-5AF4-40B5-9738-3EB305199214}
 		{46B6E175-4986-45D9-A720-C9171E10CCAD} = {85747995-5AF4-40B5-9738-3EB305199214}
+		{D0250D43-CC56-4EE2-8CEF-B147F6BABFFD} = {85747995-5AF4-40B5-9738-3EB305199214}
 	EndGlobalSection
 EndGlobal
