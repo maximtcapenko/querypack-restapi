@@ -1,4 +1,4 @@
-namespace QueryPack.RestApi.Example.Swagger
+namespace QueryPack.RestApi.DbFirstExample.Swagger
 {
     using Microsoft.OpenApi.Models;
     using Model.Meta;

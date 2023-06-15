@@ -1,14 +1,15 @@
 using System.Text.Json.Serialization;
-using QueryPack.RestApi.Example.Models;
-using QueryPack.RestApi.Example.Swagger;
-using QueryPack.RestApi.Example.Tasks;
+using QueryPack.RestApi.DbFirstExample.Internal;
+using QueryPack.RestApi.DbFirstExample.Swagger;
 using QueryPack.RestApi.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
-builder.Services.AddRestModel<ModelsContext>(options =>
+var connetionString = builder.Configuration["ConnectionString"];
+builder.Services.AddRestModel(new SqlScaffoldService(new SqlServerServicesOptions(connetionString)),
+ options =>
 {
     options.GlobalApiPrefix = "/api";
     options.SerializerOptions = SerializerOptions =>
@@ -22,7 +23,6 @@ builder.Services.AddRestModel<ModelsContext>(options =>
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(s => s.EnableRestModelAnnotations());
-builder.Services.AddHostedService<DbSeedTask>();
 builder.Services.AddCors(options => options.AddPolicy("local_test", builder => builder
 				.SetIsOriginAllowed(_ => true)
 				.AllowAnyHeader()

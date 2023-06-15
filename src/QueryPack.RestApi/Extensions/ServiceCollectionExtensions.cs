@@ -70,15 +70,13 @@ namespace QueryPack.RestApi.Extensions
 
             var dynamicContext = GetContext(dynamicContextAssembly, rootNamesapce, scaffoldedContextClassName);
 
-            AddRestModelInternal(dynamicContext, self, options);
+            var addRestModel = typeof(ServiceCollectionExtensions).GetMethods().FirstOrDefault(e => e.Name == nameof(AddRestModel)
+            && e.IsGenericMethod);
+
+            var addRestModelGeneric = addRestModel.MakeGenericMethod(dynamicContext.GetType());
+            addRestModelGeneric.Invoke(null, new object[] {self, options});
 
             return self;
-        }
-
-        internal static void AddRestModelInternal<TContext>(TContext context, IServiceCollection services, Action<RestModelOptions> options)
-            where TContext : DbContext
-        {
-            services.AddRestModel<TContext>(options);
         }
 
         internal static IEnumerable<Type> AddReadWriteModel<TContext>(this IServiceCollection self)

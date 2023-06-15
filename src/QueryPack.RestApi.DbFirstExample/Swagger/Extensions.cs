@@ -1,6 +1,6 @@
 using Swashbuckle.AspNetCore.SwaggerGen;
 
-namespace QueryPack.RestApi.Example.Swagger
+namespace QueryPack.RestApi.DbFirstExample.Swagger
 {
     public static class SwaggerGenOptionsExtensions
     {
