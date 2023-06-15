@@ -1,4 +1,4 @@
-namespace QueryPack.RestApi.Example.Models
+namespace QueryPack.RestApi.CodeFirstExample.Models
 {
     using Model.Annotations;
 

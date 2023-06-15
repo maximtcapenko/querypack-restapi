@@ -4,14 +4,14 @@ namespace QueryPack.RestApi.Mvc.Internal
     using System;
     using System.Text.Json;
     using System.Text.Json.Serialization.Metadata;
-    using Rest.Model.Meta;
+    using RestApi.Model.Meta;
 
 
     internal class ModelKeysOnlyJsonTypeInfoResolver : DefaultJsonTypeInfoResolver
     {
-        private readonly Rest.Model.Meta.ModelMetadata _modelMetadata;
+        private readonly RestApi.Model.Meta.ModelMetadata _modelMetadata;
 
-        public ModelKeysOnlyJsonTypeInfoResolver(Rest.Model.Meta.ModelMetadata modelMetadata)
+        public ModelKeysOnlyJsonTypeInfoResolver(RestApi.Model.Meta.ModelMetadata modelMetadata)
         {
             _modelMetadata = modelMetadata;
         }

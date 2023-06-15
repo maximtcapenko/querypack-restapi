@@ -1,4 +1,4 @@
-namespace QueryPack.RestApi.Example.Tasks
+namespace QueryPack.RestApi.CodeFirstExample.Tasks
 {
     using Microsoft.EntityFrameworkCore;
     using Models;
