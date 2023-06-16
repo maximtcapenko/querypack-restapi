@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 using QueryPack.RestApi.DbFirstExample.Internal;
-using QueryPack.RestApi.DbFirstExample.Swagger;
+using QueryPack.RestApi.Swagger;
 using QueryPack.RestApi.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
