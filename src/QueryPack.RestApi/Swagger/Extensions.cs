@@ -1,7 +1,7 @@
-using Swashbuckle.AspNetCore.SwaggerGen;
-
-namespace QueryPack.RestApi.DbFirstExample.Swagger
+namespace QueryPack.RestApi.Swagger
 {
+    using Swashbuckle.AspNetCore.SwaggerGen;
+
     public static class SwaggerGenOptionsExtensions
     {
         public static void EnableRestModelAnnotations(this SwaggerGenOptions options)
