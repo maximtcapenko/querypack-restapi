@@ -26,6 +26,17 @@ namespace QueryPack.RestApi.Mvc
             return model;
         }
 
+
+        [HttpGet, Route("{key}")]
+        public async Task<ActionResult<TModel>> GetByKeyAsync([FromRoute] ICriteria<TModel> key)
+        {
+            var result = await _reader.ReadAsync(key);
+            if (result == null)
+                return NotFound();
+
+            return result;
+        }
+
         [HttpGet, Route("single")]
         public Task<TModel> GetAsync([FromQuery] ICriteria<TModel> criteria)
             => _reader.ReadAsync(criteria);
