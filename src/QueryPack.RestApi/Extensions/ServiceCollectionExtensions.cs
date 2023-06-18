@@ -37,7 +37,7 @@ namespace QueryPack.RestApi.Extensions
 
             modelOptions.MvcBuilderOptions?.Invoke(mvcBuilder);
 
-            var criterias = new Type[] { typeof(QueryCriteriaBinder<>), typeof(IncludeCriteriaBinder<>), typeof(OrderByCriteriaBinder<>) };
+            var criterias = new Type[] { typeof(QueryCriteriaBinder<>), typeof(IncludeCriteriaBinder<>), typeof(OrderByCriteriaBinder<>), typeof(KeyCriteriaBinder<>) };
 
             self.AddSingleton<ICriteriaBinderProvider>(
                 new RuntimeCriteriaBinderProvider(criterias.Concat(modelOptions.Criterias).ToArray()));

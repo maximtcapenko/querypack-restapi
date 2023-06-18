@@ -20,24 +20,51 @@ namespace QueryPack.RestApi.Swagger
             {
                 var target = operation.Parameters.FirstOrDefault(e => e.Name == criteriaParameter.Name);
                 operation.Parameters.Remove(target);
-                var modelMetadata = _modelMetadataProvider.GetMetadata(criteriaParameter.ParameterType.GetGenericArguments()[0]);
-                foreach (var propertyMeta in modelMetadata.GetRegularProperties())
+                var parameterDescriptor = context.ApiDescription.ActionDescriptor.Parameters.FirstOrDefault(e => e.Name == target.Name);
+                if (parameterDescriptor.BindingInfo.BindingSource == Microsoft.AspNetCore.Mvc.ModelBinding.BindingSource.Path)
                 {
-                    var parameter = new OpenApiParameter
+                    var modelMetadata = _modelMetadataProvider.GetMetadata(criteriaParameter.ParameterType.GetGenericArguments()[0]);
+                    var keys = modelMetadata.GetKeys();
+                    foreach (var key in keys)
                     {
-                        Name = propertyMeta.PropertyName,
-                        In = target.In,
-                        Schema = new OpenApiSchema()
-                    };
+                        var parameter = new OpenApiParameter
+                        {
+                            Name = parameterDescriptor.Name,
+                            In = target.In,
+                            Schema = new OpenApiSchema()
+                        };
 
-                    VisitParameterSchema(propertyMeta.PropertyType, parameter.Schema);
-                    operation.Parameters.Add(parameter);
+                        VisitParameterSchema(key.PropertyType, parameter.Schema);
+                        operation.Parameters.Add(parameter);
+                    }
+                }
+                else
+                {
+                    var modelMetadata = _modelMetadataProvider.GetMetadata(criteriaParameter.ParameterType.GetGenericArguments()[0]);
+                    foreach (var propertyMeta in modelMetadata.GetRegularProperties())
+                    {
+                        var parameter = new OpenApiParameter
+                        {
+                            Name = propertyMeta.PropertyName,
+                            In = target.In,
+                            Schema = new OpenApiSchema()
+                        };
+
+                        VisitParameterSchema(propertyMeta.PropertyType, parameter.Schema);
+                        operation.Parameters.Add(parameter);
+                    }
                 }
             }
         }
 
         void VisitParameterSchema(Type type, OpenApiSchema parameterSchema, bool nullable = false)
         {
+            if (type == typeof(Guid))
+            {
+                parameterSchema.Type = "string";
+                parameterSchema.Format = "uuid";
+            }
+            
             if (type == typeof(string))
                 parameterSchema.Type = "string";
 
