@@ -37,7 +37,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-
+app.UseCustomExceptionHandler();
 app.UseHttpsRedirection();
 
 app.UseAuthorization();
