@@ -13,6 +13,8 @@ namespace QueryPack.RestApi.Extensions
     using Mvc.Model.Binders;
     using Mvc.Model.Impl;
     using Internal;
+    using Exceptions;
+    using Exceptions.Internal;
 
     public static class ServiceCollectionExtensions
     {
@@ -42,10 +44,12 @@ namespace QueryPack.RestApi.Extensions
             self.AddSingleton<ICriteriaBinderProvider>(
                 new RuntimeCriteriaBinderProvider(criterias.Concat(modelOptions.Criterias).ToArray()));
 
+            self.AddSingleton<IExceptionHandlingResultFactory>(new ExceptionHandlingResultFactoryImpl(modelOptions.ExceptionMessageBuilders));
+
             return self;
         }
 
-        public static IServiceCollection AddRestModel(this IServiceCollection self, 
+        public static IServiceCollection AddRestModel(this IServiceCollection self,
             IScaffoldService scaffolder, Action<RestModelOptions> options = default)
         {
             var scaffoldedContextClassName = "ScaffoldedContext";
@@ -74,7 +78,7 @@ namespace QueryPack.RestApi.Extensions
             && e.IsGenericMethod);
 
             var addRestModelGeneric = addRestModel.MakeGenericMethod(dynamicContext.GetType());
-            addRestModelGeneric.Invoke(null, new object[] {self, options});
+            addRestModelGeneric.Invoke(null, new object[] { self, options });
 
             return self;
         }
