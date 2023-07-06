@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using Microsoft.EntityFrameworkCore;
 using QueryPack.RestApi.CodeFirstExample.Models;
 using QueryPack.RestApi.CodeFirstExample.Tasks;
 using QueryPack.RestApi.Extensions;
@@ -11,6 +12,9 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRestModel<ModelsContext>(options =>
 {
     options.GlobalApiPrefix = "/api";
+    options.ContextOptionsBuilder = (dbContextOptionsBuilder) 
+        => dbContextOptionsBuilder.UseInMemoryDatabase("test");
+
     options.SerializerOptions = SerializerOptions =>
     {
         SerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;

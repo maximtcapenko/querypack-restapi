@@ -25,7 +25,7 @@ namespace QueryPack.RestApi.Extensions
             var modelOptions = new RestModelOptions();
             options?.Invoke(modelOptions);
 
-            var registeredTypes = self.AddReadWriteModel<TContext>();
+            var registeredTypes = self.AddReadWriteModel<TContext>(modelOptions);
             var mvcBuilder = self.AddControllersWithViews(options =>
             {
                 options.ModelBinderProviders.Insert(0, new ModelKeyBinderProvider());
@@ -83,10 +83,10 @@ namespace QueryPack.RestApi.Extensions
             return self;
         }
 
-        internal static IEnumerable<Type> AddReadWriteModel<TContext>(this IServiceCollection self)
+        internal static IEnumerable<Type> AddReadWriteModel<TContext>(this IServiceCollection self, RestModelOptions restModelOptions)
             where TContext : DbContext
         {
-            self.AddDbContext<TContext>();
+            self.AddDbContext<TContext>(options => restModelOptions.ContextOptionsBuilder?.Invoke(options));
             self.AddScoped<DbContext>(s =>
             {
                 var ctx = s.GetRequiredService<TContext>();
