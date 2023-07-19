@@ -9,7 +9,7 @@ namespace QueryPack.RestApi.Model.Impl
     using RestApi.Internal;
     using RestApi.Model.Meta;
 
-    internal class ModelWriterImpl<TModel> : IModelWriter<TModel>
+    internal class ModelWriterImpl<TModel>
         where TModel : class
     {
         private readonly DbContext _dbContext;
@@ -140,6 +140,7 @@ namespace QueryPack.RestApi.Model.Impl
                                     predicate = Expression.And(predicate, expression);
                             }
                         }
+                        
                         var result = await exists(null, new object[] { _dbContext, navigation.CurrentValue, meta, predicate, meta.InstanceExpression });
 
                         var @ref = navigation as ReferenceEntry;

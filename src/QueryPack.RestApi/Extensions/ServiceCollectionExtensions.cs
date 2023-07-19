@@ -94,14 +94,11 @@ namespace QueryPack.RestApi.Extensions
             });
 
             var modelTypes = new List<Type>();
-            var register = typeof(ServiceCollectionExtensions).GetMethod(nameof(ServiceCollectionExtensions.RegisterModel), System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic);
 
             foreach (var property in typeof(TContext).GetProperties())
             {
                 if (property.PropertyType.IsGenericType && property.PropertyType.GetGenericTypeDefinition() == typeof(DbSet<>))
                 {
-                    var genericRegister = register.MakeGenericMethod(property.PropertyType.GetGenericArguments());
-                    genericRegister.Invoke(null, new object[] { self });
                     modelTypes.AddRange(property.PropertyType.GetGenericArguments());
                 }
             }
@@ -109,13 +106,6 @@ namespace QueryPack.RestApi.Extensions
             self.AddSingleton<IModelMetadataProvider>(new ModelMetadataProviderImpl(modelTypes));
 
             return modelTypes;
-        }
-
-        internal static void RegisterModel<T>(IServiceCollection services)
-            where T : class
-        {
-            services.AddScoped<IModelReader<T>, ModelReaderImpl<T>>()
-                    .AddScoped<IModelWriter<T>, ModelWriterImpl<T>>();
         }
 
         internal static DbContext GetContext(Assembly assembly, string rootNamesapce, string contextClassName)
