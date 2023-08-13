@@ -5,7 +5,6 @@ namespace QueryPack.RestApi.Extensions
     using Microsoft.EntityFrameworkCore;
     using Microsoft.EntityFrameworkCore.Scaffolding;
     using Model;
-    using Model.Impl;
     using Model.Meta;
     using Model.Meta.Impl;
     using Mvc;
