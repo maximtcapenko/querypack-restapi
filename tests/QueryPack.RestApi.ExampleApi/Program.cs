@@ -15,8 +15,6 @@ builder.Services.AddCors(options => options.AddPolicy("local_test", builder => b
 var app = builder.Build();
 
 app.UseCustomExceptionHandler();
-app.UseHttpsRedirection();
-
 app.UseAuthorization();
 
 app.MapControllers();

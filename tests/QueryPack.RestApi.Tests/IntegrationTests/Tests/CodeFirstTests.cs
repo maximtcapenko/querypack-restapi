@@ -69,7 +69,7 @@ public class CodeFirstTests : IClassFixture<WebApplicationFactory<Program>>
         entities.All(e => e.Versions.Any()).Should().BeTrue();
     }
 
-   [Fact]
+    [Fact]
     public async Task Get_records_where_name_starts_from_variants_and_ordered_desc_should_return_success()
     {
         var client = _applicationFactory.CreateClient();
@@ -84,6 +84,37 @@ public class CodeFirstTests : IClassFixture<WebApplicationFactory<Program>>
         entities.Any(e => e.Name.StartsWith("ent_2")).Should().BeTrue();
         entities.Any(e => e.Name.StartsWith("ent_5")).Should().BeTrue();
         entities.All(e => e.Versions.Any()).Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task Get_record_by_id_should_return_success()
+    {
+        var client = _applicationFactory.CreateClient();
+
+        await InitEntityTableAsync(_applicationFactory);
+
+        var readResponse = await client.GetAsync($"{BasePath}/entities/range?first=0&last=1");
+        readResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var range = await readResponse.Content.ReadFromJsonAsync<Range<Entity>>();
+        var firstEntity = range.Results.First();
+
+        readResponse = await client.GetAsync($"{BasePath}/entities/{firstEntity.Id}");
+        readResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var entity = await readResponse.Content.ReadFromJsonAsync<Entity>();
+        firstEntity.Should().BeEquivalentTo(entity);
+    }
+
+    [Fact]
+    public async Task Get_record_by_id_should_return_notfound()
+    {
+        var client = _applicationFactory.CreateClient();
+
+        await InitEntityTableAsync(_applicationFactory);
+
+        var readResponse = await client.GetAsync($"{BasePath}/entities/{Guid.NewGuid()}");
+        readResponse.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
 
     private static async Task InitEntityTableAsync(WebApplicationFactory<Program> webApplicationFactory)
