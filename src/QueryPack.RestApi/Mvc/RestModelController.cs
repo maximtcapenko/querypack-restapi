@@ -14,7 +14,7 @@ namespace QueryPack.RestApi.Mvc
     internal class RestModelController<TModel> : ControllerBase
         where TModel : class
     {
-        private static ConcurrentDictionary<Type, Delegate> _internalMethodsCache = new ConcurrentDictionary<Type, Delegate>();
+        private static readonly ConcurrentDictionary<Type, Delegate> _internalMethodsCache = new();
 
         private readonly DbContext _dbContext;
         private readonly IModelMetadataProvider _modelMetadataProvider;

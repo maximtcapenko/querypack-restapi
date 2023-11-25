@@ -59,7 +59,7 @@ namespace QueryPack.RestApi.Model.Meta
 
         public IModelMetadataProvider GetModelMetadataProvider() => _metadataProvider;
 
-        private bool ResolveNavigation(PropertyInfo property, IModelMetadataProvider metadataProvider)
+        private static bool ResolveNavigation(PropertyInfo property, IModelMetadataProvider metadataProvider)
         {
             if (ResolveIsPrimitive(property)) return false;
 
@@ -75,9 +75,9 @@ namespace QueryPack.RestApi.Model.Meta
             return metadataProvider.GetMetadata(candidate) != null;
         }
 
-        private bool ResolveIsPrimitive(PropertyInfo property)
+        private static bool ResolveIsPrimitive(PropertyInfo property)
         {
-            bool isPrimitive(Type type) => type.IsPrimitive
+            static bool isPrimitive(Type type) => type.IsPrimitive
                 || type == typeof(string)
                 || type.IsEnum
                 || type.IsValueType;
@@ -87,7 +87,7 @@ namespace QueryPack.RestApi.Model.Meta
                 && isPrimitive(property.PropertyType.GetGenericArguments()[0]));
         }
 
-        private bool ResolveIsKey(PropertyInfo property, ModelMetadata modelMetadata)
+        private static bool ResolveIsKey(PropertyInfo property, ModelMetadata modelMetadata)
         {
             if (property.GetCustomAttribute<KeyAttribute>() != null)
             {
@@ -103,12 +103,12 @@ namespace QueryPack.RestApi.Model.Meta
             return false;
         }
 
-        private bool ResolveIsIgnored(PropertyInfo property)
+        private static bool ResolveIsIgnored(PropertyInfo property)
             => property.GetCustomAttribute<NotMappedAttribute>() != null;
 
-        private bool ResolveIsDate(PropertyInfo property)
+        private static bool ResolveIsDate(PropertyInfo property)
         {
-            bool isDate(Type type) => type == typeof(DateTime)
+            static bool isDate(Type type) => type == typeof(DateTime)
               || type == typeof(DateTimeOffset)
               || type == typeof(TimeSpan);
 

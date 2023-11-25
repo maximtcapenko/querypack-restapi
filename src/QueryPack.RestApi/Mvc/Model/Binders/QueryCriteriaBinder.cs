@@ -9,10 +9,7 @@ namespace QueryPack.RestApi.Mvc.Model.Binders
     {
         public void BindModel(ICriteriaBindingContext<TModel> bindingContext)
         {
-            if (bindingContext == null)
-            {
-                throw new ArgumentNullException(nameof(bindingContext));
-            }
+            ArgumentNullException.ThrowIfNull(bindingContext, nameof(bindingContext));
 
             var modelMeta = bindingContext.ModelMetadata;
             var criteriaKeys = new Dictionary<PropertyMetadata, IEnumerable<object>>();
@@ -56,7 +53,7 @@ namespace QueryPack.RestApi.Mvc.Model.Binders
             bindingContext.SetBindingResult(new QueryCriteria<TModel>(modelMeta, criteriaKeys));
         }
 
-        private bool TryFill(ICriteriaBindingContext<TModel> bindingContext,
+        private static bool TryFill(ICriteriaBindingContext<TModel> bindingContext,
                    string propertyName, Type propertyType, ValueProviderResult valueProviderResult,
                     List<object> results)
         {
@@ -76,7 +73,7 @@ namespace QueryPack.RestApi.Mvc.Model.Binders
                 }
             }
 
-            if (values.Count() == 0 || values.Count() != valueProviderResult.Count())
+            if (values.Count == 0 || values.Count != valueProviderResult.Length)
             {
                 bindingContext.TryAddModelError(propertyName, valueProviderResult);
                 return false;

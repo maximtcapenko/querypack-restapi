@@ -109,7 +109,7 @@ namespace QueryPack.RestApi.Model.Internal.Criterias
                 resultAnnotationExpression = And(resultAnnotationExpression, annotationExpression);
             }
 
-            if (resultAnnotationExpression == null)
+            if (resultAnnotationExpression is null)
                 throw new NotImplementedException($"Property {propertyMetadata.PropertyName} is annotated but annotations are not implemented");
 
             return resultAnnotationExpression;
@@ -165,7 +165,7 @@ namespace QueryPack.RestApi.Model.Internal.Criterias
 
         private static Expression And(Expression left, Expression right)
         {
-            if (left == null)
+            if (left is null)
                 left = right;
             else
                 left = Expression.And(left, right);

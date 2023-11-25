@@ -8,8 +8,7 @@ namespace QueryPack.RestApi.Model.Internal.Processing
 
     internal class OnSavingChangesInterceptor : ISaveChangesInterceptor
     {
-        private static ConcurrentDictionary<Type, Func<ISavingChangesProcessor>> _processorFactoryContainer
-            = new ConcurrentDictionary<Type, Func<ISavingChangesProcessor>>();
+        private static ConcurrentDictionary<Type, Func<ISavingChangesProcessor>> _processorFactoryContainer = new();
 
         public ValueTask<InterceptionResult<int>> SavingChangesAsync(DbContextEventData eventData, InterceptionResult<int> result, CancellationToken cancellationToken = default)
         {
@@ -54,12 +53,13 @@ namespace QueryPack.RestApi.Model.Internal.Processing
         }
         #endregion
 
-        private void ProcessEntry(EntityEntry entry)
+        private static void ProcessEntry(EntityEntry entry)
         {
             var postSave = entry.Entity.GetType()
-                                            .GetCustomAttributes(typeof(OnSavingChangesAttribute), false)
-                                            .FirstOrDefault();
-            if (postSave != null)
+                                .GetCustomAttributes(typeof(OnSavingChangesAttribute), false)
+                                .FirstOrDefault();
+
+            if (postSave is not null)
             {
                 var processType = (postSave as OnSavingChangesAttribute)?.ProcessorType;
                 var processorFactory = _processorFactoryContainer.GetOrAdd(processType, type =>

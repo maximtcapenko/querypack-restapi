@@ -4,7 +4,7 @@ namespace QueryPack.RestApi.Model.Meta.Impl
 
     internal class QueryAnnotationContext : IAnnotationContext
     {
-        private List<Expression> _annotationExpressions = new List<Expression>();
+        private readonly List<Expression> _annotationExpressions = new();
 
         public ModelMetadata ModelMetadata { get; }
         public IModelMetadataProvider ModelMetadataProvider { get; }
@@ -13,7 +13,7 @@ namespace QueryPack.RestApi.Model.Meta.Impl
         public object Input { get; }
         
         public static QueryAnnotationContext Create(PropertyMetadata propertyMetadata, object input)
-             => new QueryAnnotationContext(propertyMetadata.ModelMetadata, propertyMetadata.GetModelMetadataProvider(),
+             => new(propertyMetadata.ModelMetadata, propertyMetadata.GetModelMetadataProvider(),
              propertyMetadata.PropertyExpression as MemberExpression, propertyMetadata.PropertyType, input);
 
         public QueryAnnotationContext(ModelMetadata modelMetadata, 
