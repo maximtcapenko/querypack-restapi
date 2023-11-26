@@ -8,21 +8,20 @@ namespace QueryPack.RestApi.Model.Meta.Impl
         where TModel : class
     {
         private readonly Action<TModel, TValue> _setter;
-        private readonly Func<object, object[], TValue> _collectsionSetter;
+        private readonly Func<object, object[], TValue> _collectionSetter;
 
         public ValueSetterImpl(Action<TModel, TValue> setter)
         {
             _setter = setter;
             if (IsEnumearable())
-                _collectsionSetter = ResolveCollectionSetter();
+                _collectionSetter = ResolveCollectionSetter();
         }
 
         public void SetValue(object model, object value)
         {
-            if (_collectsionSetter is not null)
+            if (_collectionSetter is not null)
             {
-                var value1 = _collectsionSetter(null, new[] { value });
-                _setter((TModel)model, value1);
+                _setter((TModel)model, _collectionSetter(null, new[] { value }));
             }
             else
                 _setter((TModel)model, (TValue)value);
@@ -30,7 +29,7 @@ namespace QueryPack.RestApi.Model.Meta.Impl
 
         private static bool IsEnumearable()
             => typeof(TValue).GetInterfaces()
-                             .Any(e => e.IsGenericType && e.GetGenericTypeDefinition()  == typeof(IEnumerable<>) 
+                             .Any(e => e.IsGenericType && e.GetGenericTypeDefinition() == typeof(IEnumerable<>)
                                         && e.GetGenericArguments().All(i => i.IsClass));
 
         private static List<T> Convert<T>(IEnumerable source) => source.Cast<T>().ToList();

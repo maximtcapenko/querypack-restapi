@@ -2,8 +2,6 @@ namespace QueryPack.RestApi.Mvc
 {
     using System.Collections;
     using System.Collections.Concurrent;
-    using System.Linq.Expressions;
-    using System.Reflection;
     using Microsoft.AspNetCore.Mvc;
     using Microsoft.EntityFrameworkCore;
     using Mvc.Internal;
@@ -32,7 +30,7 @@ namespace QueryPack.RestApi.Mvc
         [KeysResultFilter]
         public async Task<TModel> CreateAsync(TModel model)
         {
-            await VisitNavigations(model);
+            await ProcessNavigationsAsync(model);
             await _dbContext.AddAsync(model);
             await _dbContext.SaveChangesAsync();
 
@@ -51,7 +49,7 @@ namespace QueryPack.RestApi.Mvc
             if (result == null)
                 return NotFound();
 
-            await VisitNavigations(model);
+            await ProcessNavigationsAsync(model);
             Map(model, result);
             await _dbContext.SaveChangesAsync();
 
@@ -143,14 +141,14 @@ namespace QueryPack.RestApi.Mvc
             }
         }
 
-        private async Task VisitNavigations(TModel model)
+        private async Task ProcessNavigationsAsync(TModel model)
         {
             var modelMeta = _modelMetadataProvider.GetMetadata(typeof(TModel));
             foreach (var navigation in modelMeta.GetNavigations())
             {
                 if (navigation.IsCollection)
                 {
-                    await ProcessCollectionPropertyAsync(_dbContext, navigation, model, _modelMetadataProvider);
+                    await ProcessCollectionNavigationAsync(_dbContext, navigation, model, _modelMetadataProvider);
                     return;
                 }
 
@@ -174,7 +172,7 @@ namespace QueryPack.RestApi.Mvc
             }
         }
 
-        private static async Task ProcessCollectionPropertyAsync(DbContext dbContext, PropertyMetadata propertyMetadata, object rootInstance, IModelMetadataProvider modelMetadataProvider)
+        private static async Task ProcessCollectionNavigationAsync(DbContext dbContext, PropertyMetadata propertyMetadata, object rootInstance, IModelMetadataProvider modelMetadataProvider)
         {
             var navigationValues = new List<object>();
 
