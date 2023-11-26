@@ -3,6 +3,7 @@ namespace QueryPack.RestApi.Internal
     using System.Linq.Expressions;
     using System.Reflection;
     using System.Text;
+    using QueryPack.RestApi.Model.Meta;
 
     internal class ExpressionUtils
     {
@@ -15,7 +16,7 @@ namespace QueryPack.RestApi.Internal
                 path.Add(memberName);
                 memberExpression = memberExpression.Expression as MemberExpression;
             }
-            while (memberExpression != null);
+            while (memberExpression is not null);
 
             var sb = new StringBuilder();
             var i = path.Count - 1;
@@ -27,7 +28,7 @@ namespace QueryPack.RestApi.Internal
             sb.Append(path[i]);
             return sb.ToString();
         }
-        
+
         internal static Type GetMemberType(Expression candidateExpression)
              => (candidateExpression as MemberExpression).Member switch
              {
@@ -58,6 +59,26 @@ namespace QueryPack.RestApi.Internal
             return Expression.Lambda<Func<TEntity, TProperty>>(block, (ParameterExpression)instanceExpression).Compile();
         }
 
+        internal static Expression BuildPredicateQueryByKeysExpression(ModelMetadata meta, object instance)
+        {
+            var keys = meta.GetKeys();
+            Expression predicate = null;
+
+            foreach (var key in keys)
+            {
+                var value = key.ValueGetter.GetValue(instance);
+                if (value is not null)
+                {
+                    var expression = Expression.Equal(key.PropertyExpression, Expression.Constant(value));
+                    if (predicate is null)
+                        predicate = expression;
+                    else
+                        predicate = Expression.And(predicate, expression);
+                }
+            }
+
+            return predicate;
+        }
         private static Expression<Action<TEntity, TProperty>> CreateSetterInternal<TEntity, TProperty>(Expression propertyExpression,
             Expression instanceExpression)
         {
@@ -87,7 +108,7 @@ namespace QueryPack.RestApi.Internal
 
                 memberExpression = memberExpression.Expression as MemberExpression;
             }
-            while (memberExpression != null);
+            while (memberExpression is not null);
 
             return steps.ToList();
         }
@@ -107,7 +128,7 @@ namespace QueryPack.RestApi.Internal
 
                 memberExpression = memberExpression.Expression as MemberExpression;
             }
-            while (memberExpression != null);
+            while (memberExpression is not null);
 
             return tree.ToList();
         }

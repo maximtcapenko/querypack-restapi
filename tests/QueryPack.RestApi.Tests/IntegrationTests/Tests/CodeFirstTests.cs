@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
+using AutoFixture.Xunit2;
 using FluentAssertions;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
@@ -25,7 +26,7 @@ public class CodeFirstTests : IClassFixture<WebApplicationFactory<Program>>
     {
         var client = _applicationFactory.CreateClient();
 
-        await InitEntityTableAsync(_applicationFactory);
+        await InitTestDatabaseAsync(_applicationFactory);
 
         var readResponse = await client.GetAsync($"{BasePath}/entities");
         readResponse.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -39,7 +40,7 @@ public class CodeFirstTests : IClassFixture<WebApplicationFactory<Program>>
     {
         var client = _applicationFactory.CreateClient();
 
-        await InitEntityTableAsync(_applicationFactory);
+        await InitTestDatabaseAsync(_applicationFactory);
 
         var readResponse = await client.GetAsync($"{BasePath}/entities/range?include=versions&first=0&last=9&order_by[name]=desc");
         readResponse.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -58,7 +59,7 @@ public class CodeFirstTests : IClassFixture<WebApplicationFactory<Program>>
     {
         var client = _applicationFactory.CreateClient();
 
-        await InitEntityTableAsync(_applicationFactory);
+        await InitTestDatabaseAsync(_applicationFactory);
 
         var readResponse = await client.GetAsync($"{BasePath}/entities?include=versions&name=ent_2&order_by[name]=desc");
         readResponse.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -74,7 +75,7 @@ public class CodeFirstTests : IClassFixture<WebApplicationFactory<Program>>
     {
         var client = _applicationFactory.CreateClient();
 
-        await InitEntityTableAsync(_applicationFactory);
+        await InitTestDatabaseAsync(_applicationFactory);
 
         var readResponse = await client.GetAsync($"{BasePath}/entities?include=versions&name=ent_2&name=ent_5&order_by[name]=desc");
         readResponse.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -91,7 +92,7 @@ public class CodeFirstTests : IClassFixture<WebApplicationFactory<Program>>
     {
         var client = _applicationFactory.CreateClient();
 
-        await InitEntityTableAsync(_applicationFactory);
+        await InitTestDatabaseAsync(_applicationFactory);
 
         var readResponse = await client.GetAsync($"{BasePath}/entities/range?first=0&last=1");
         readResponse.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -111,13 +112,122 @@ public class CodeFirstTests : IClassFixture<WebApplicationFactory<Program>>
     {
         var client = _applicationFactory.CreateClient();
 
-        await InitEntityTableAsync(_applicationFactory);
+        await InitTestDatabaseAsync(_applicationFactory);
 
         var readResponse = await client.GetAsync($"{BasePath}/entities/{Guid.NewGuid()}");
         readResponse.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
 
-    private static async Task InitEntityTableAsync(WebApplicationFactory<Program> webApplicationFactory)
+    [AutoData, Theory]
+    public async Task When_create_new_record_then_should_return_success(string name)
+    {
+        var record = new Entity
+        {
+            Id = Guid.NewGuid(),
+            Name = name,
+            CreatedAt = DateTimeOffset.UtcNow,
+            Versions = GenerateVersions(3).ToList()
+        };
+
+        var client = _applicationFactory.CreateClient();
+        var response = await client.PostAsJsonAsync($"{BasePath}/entities", record);
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var keys = await response.Content.ReadFromJsonAsync<Dictionary<string, Guid>>();
+        keys.Should().NotBeEmpty();
+        keys.Should().ContainKey("id");
+
+        var readResponse = await client.GetAsync($"{BasePath}/entities/single?id={keys["id"]}&include=versions");
+        readResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var entity = await readResponse.Content.ReadFromJsonAsync<Entity>();
+        entity.Should().NotBeNull();
+        entity.Id.Should().Be(keys["id"]);
+        entity.Name.Should().Be(name);
+        entity.Versions.Should().HaveCount(3);
+    }
+
+    [AutoData, Theory]
+    public async Task When_create_new_record_with_attachment_then_should_return_success(string name)
+    {
+        var client = _applicationFactory.CreateClient();
+        await InitTestDatabaseAsync(_applicationFactory);
+
+        var versions = await GetAllVersions(client);
+
+        var record = new Entity
+        {
+            Id = Guid.NewGuid(),
+            Name = name,
+            CreatedAt = DateTimeOffset.UtcNow,
+            Versions = versions.Take(3).ToList()
+        };
+
+        var response = await client.PostAsJsonAsync($"{BasePath}/entities", record);
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var keys = await response.Content.ReadFromJsonAsync<Dictionary<string, Guid>>();
+        keys.Should().NotBeEmpty();
+        keys.Should().ContainKey("id");
+
+        var readResponse = await client.GetAsync($"{BasePath}/entities/single?id={keys["id"]}&include=versions");
+        readResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var entity = await readResponse.Content.ReadFromJsonAsync<Entity>();
+        entity.Should().NotBeNull();
+        entity.Id.Should().Be(keys["id"]);
+        entity.Name.Should().Be(name);
+        entity.Versions.Should().HaveCount(3);
+
+        var checkVersions = await GetAllVersions(client);
+        checkVersions.Should().HaveCount(versions.Count());
+    }
+
+    [AutoData, Theory]
+    public async Task When_create_new_record_with_attachment_then_should_add_new_attachemnet_and_return_success(string name)
+    {
+        var client = _applicationFactory.CreateClient();
+        await InitTestDatabaseAsync(_applicationFactory);
+
+        var versions = await GetAllVersions(client);
+
+        var record = new Entity
+        {
+            Id = Guid.NewGuid(),
+            Name = name,
+            CreatedAt = DateTimeOffset.UtcNow,
+            Versions = versions.Take(3).Concat(new[] { new Models.Version
+            {
+                 Id = Guid.NewGuid(),
+                  Name = name,
+                  CreatedAt = DateTimeOffset.UtcNow
+            } }).ToList()
+        };
+
+        var response = await client.PostAsJsonAsync($"{BasePath}/entities", record);
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var keys = await response.Content.ReadFromJsonAsync<Dictionary<string, Guid>>();
+        keys.Should().NotBeEmpty();
+        keys.Should().ContainKey("id");
+
+        var readResponse = await client.GetAsync($"{BasePath}/entities/single?id={keys["id"]}&include=versions");
+        readResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var entity = await readResponse.Content.ReadFromJsonAsync<Entity>();
+        entity.Should().NotBeNull();
+        entity.Id.Should().Be(keys["id"]);
+        entity.Name.Should().Be(name);
+        entity.Versions.Should().HaveCount(4);
+
+        var checkVersions = await GetAllVersions(client);
+        checkVersions.Should().HaveCount(versions.Count() + 1);
+    }
+
+    private static Task<IEnumerable<Models.Version>> GetAllVersions(HttpClient client)
+        => client.GetFromJsonAsync<IEnumerable<Models.Version>>($"{BasePath}/versions");
+
+    private static async Task InitTestDatabaseAsync(WebApplicationFactory<Program> webApplicationFactory)
     {
         using var scope = webApplicationFactory.Services.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<ModelsContext>();
@@ -137,14 +247,14 @@ public class CodeFirstTests : IClassFixture<WebApplicationFactory<Program>>
         }
 
         await context.SaveChangesAsync();
+    }
 
-        static IEnumerable<Models.Version> GenerateVersions(int count) =>
-            Enumerable.Range(0, count).Select((index, e) => new Models.Version
+    private static IEnumerable<Models.Version> GenerateVersions(int count)
+        => Enumerable.Range(0, count).Select((index, e) => new Models.Version
             {
                 Id = Guid.NewGuid(),
                 Value = index,
                 Name = $"ver_{index}",
                 CreatedAt = DateTimeOffset.UtcNow,
             });
-    }
 }

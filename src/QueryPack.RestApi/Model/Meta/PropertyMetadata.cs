@@ -63,8 +63,7 @@ namespace QueryPack.RestApi.Model.Meta
         {
             if (ResolveIsPrimitive(property)) return false;
 
-            Type candidate = null;
-
+            Type candidate;
             if (property.PropertyType.IsGenericType)
             {
                 candidate = property.PropertyType.GetGenericArguments().First();
@@ -72,7 +71,7 @@ namespace QueryPack.RestApi.Model.Meta
             else
                 candidate = property.PropertyType;
 
-            return metadataProvider.GetMetadata(candidate) != null;
+            return metadataProvider.GetMetadata(candidate) is not null;
         }
 
         private static bool ResolveIsPrimitive(PropertyInfo property)
