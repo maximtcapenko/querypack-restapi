@@ -1,8 +1,7 @@
 namespace QueryPack.RestApi.Mvc
 {
+    using System.Collections;
     using System.Collections.Concurrent;
-    using System.Linq.Expressions;
-    using System.Reflection;
     using Microsoft.AspNetCore.Mvc;
     using Microsoft.EntityFrameworkCore;
     using Mvc.Internal;
@@ -14,7 +13,7 @@ namespace QueryPack.RestApi.Mvc
     internal class RestModelController<TModel> : ControllerBase
         where TModel : class
     {
-        private static ConcurrentDictionary<Type, Delegate> _internalMethodsCache = new ConcurrentDictionary<Type, Delegate>();
+        private static readonly ConcurrentDictionary<Type, Delegate> _internalMethodsCache = new();
 
         private readonly DbContext _dbContext;
         private readonly IModelMetadataProvider _modelMetadataProvider;
@@ -31,7 +30,7 @@ namespace QueryPack.RestApi.Mvc
         [KeysResultFilter]
         public async Task<TModel> CreateAsync(TModel model)
         {
-            await VisitNavigations(model);
+            await ProcessNavigationsAsync(model);
             await _dbContext.AddAsync(model);
             await _dbContext.SaveChangesAsync();
 
@@ -50,7 +49,7 @@ namespace QueryPack.RestApi.Mvc
             if (result == null)
                 return NotFound();
 
-            await VisitNavigations(model);
+            await ProcessNavigationsAsync(model);
             Map(model, result);
             await _dbContext.SaveChangesAsync();
 
@@ -67,7 +66,7 @@ namespace QueryPack.RestApi.Mvc
             var result = await container.Query.FirstOrDefaultAsync();
             if (result == null)
                 return NotFound();
-            
+
             _dbContext.Remove(result);
             await _dbContext.SaveChangesAsync();
             return Ok();
@@ -132,7 +131,7 @@ namespace QueryPack.RestApi.Mvc
             return new Range<TModel>(range.First, range.Last, results, count);
         }
 
-        void Map(TModel from, TModel to)
+        private void Map(TModel from, TModel to)
         {
             var modelMeta = _modelMetadataProvider.GetMetadata(typeof(TModel));
             foreach (var property in modelMeta.PropertyMetadata.Where(e => !e.IsReadOnly && !e.IsKey))
@@ -142,13 +141,16 @@ namespace QueryPack.RestApi.Mvc
             }
         }
 
-        async Task VisitNavigations(TModel model)
+        private async Task ProcessNavigationsAsync(TModel model)
         {
             var modelMeta = _modelMetadataProvider.GetMetadata(typeof(TModel));
             foreach (var navigation in modelMeta.GetNavigations())
             {
-                if(navigation.IsCollection) //skip collections now
-                    continue;
+                if (navigation.IsCollection)
+                {
+                    await ProcessCollectionNavigationAsync(_dbContext, navigation, model, _modelMetadataProvider);
+                    return;
+                }
 
                 // load dependencies if they exists
                 var navigationInstance = navigation.ValueGetter.GetValue(model);
@@ -157,57 +159,48 @@ namespace QueryPack.RestApi.Mvc
                     var navigationMeta = _modelMetadataProvider.GetMetadata(navigation.PropertyType);
 
                     // query db
-                    var loadQueryAsync = (Func<object, object[], Task<object>>)_internalMethodsCache.GetOrAdd(navigationMeta.ModelType, type =>
-                    {
-                        var method = typeof(RestModelController<TModel>).GetMethods(BindingFlags.Static | BindingFlags.NonPublic)
-                           .FirstOrDefault(e => e.Name == nameof(LoadAsync));
-                        return MethodFactory.CreateGenericMethod<Task<object>>(method.MakeGenericMethod(navigationMeta.ModelType));
-                    });
+                    var loadNavigationByKeysAsync = (Func<object, object[], Task<object>>)_internalMethodsCache.GetOrAdd(navigationMeta.ModelType,
+                        type => MethodFactory.CreateGenericMethod<Task<object>>(QueryUtils.LoadAsyncMethod.MakeGenericMethod(navigationMeta.ModelType))
+                    );
 
-                    var navigationDbValue = await loadQueryAsync(_dbContext, new[] { _dbContext, navigationInstance, navigationMeta });
+                    var navigationDbValue = await loadNavigationByKeysAsync(_dbContext, new[] { _dbContext, navigationInstance, navigationMeta });
                     if (navigationDbValue is not null)
                     {
-                        // assign existed value (for now)
                         navigation.ValueSetter.SetValue(model, navigationDbValue);
                     }
                 }
             }
         }
 
-        static Expression GetQueryExpression(ModelMetadata meta, object instance)
+        private static async Task ProcessCollectionNavigationAsync(DbContext dbContext, PropertyMetadata propertyMetadata, object rootInstance, IModelMetadataProvider modelMetadataProvider)
         {
+            var navigationValues = new List<object>();
 
-            var keys = meta.GetKeys();
-            Expression predicate = null;
+            var propertyValue = propertyMetadata.ValueGetter.GetValue(rootInstance);
+            var enumeable = propertyValue as IEnumerable;
+            var enumertor = enumeable.GetEnumerator();
 
-            foreach (var key in keys)
+            while (enumertor.MoveNext())
             {
-                var value = key.ValueGetter.GetValue(instance);
-                if (value != null)
-                {
-                    var expression = Expression.Equal(key.PropertyExpression, Expression.Constant(value));
-                    if (predicate == null)
-                        predicate = expression;
-                    else
-                        predicate = Expression.And(predicate, expression);
-                }
+                var navigationInstance = enumertor.Current;
+                var navigationMeta = modelMetadataProvider.GetMetadata(navigationInstance.GetType());
+
+                var loadNavigationByKeysAsync = (Func<object, object[], Task<object>>)_internalMethodsCache.GetOrAdd(navigationMeta.ModelType,
+                          type => MethodFactory.CreateGenericMethod<Task<object>>(QueryUtils.LoadAsyncMethod.MakeGenericMethod(navigationMeta.ModelType))
+                      );
+
+                var navigationDbValue = await loadNavigationByKeysAsync(dbContext, new[] { dbContext, navigationInstance, navigationMeta });
+                
+                if (navigationDbValue is not null)
+                    navigationValues.Add(navigationDbValue);
+                else
+                    navigationValues.Add(navigationInstance);
             }
 
-            return predicate;
+            propertyMetadata.ValueSetter.SetValue(rootInstance, navigationValues);
         }
 
-        static async Task<object> LoadAsync<T>(DbContext context, object instance, ModelMetadata meta)
-          where T : class
-        {
-            var expression = GetQueryExpression(meta, instance);
-
-            if (expression is null) return null;
-
-            var where = Expression.Lambda<Func<T, bool>>(expression, meta.InstanceExpression as ParameterExpression);
-            return await context.Set<T>().FirstOrDefaultAsync(where);
-        }
-
-        class ModelReadQueryContainer : IQueryContainer<TModel>
+        private class ModelReadQueryContainer : IQueryContainer<TModel>
         {
             public ModelReadQueryContainer(IQueryable<TModel> query)
             {

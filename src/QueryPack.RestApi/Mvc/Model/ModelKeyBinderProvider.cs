@@ -22,8 +22,7 @@ namespace QueryPack.RestApi.Mvc.Model
 
         class TypedModelBinder : IModelBinder
         {
-            private static ConcurrentDictionary<Type, IModelBinder> _internalBindersCache
-             = new ConcurrentDictionary<Type, IModelBinder>();
+            private static readonly ConcurrentDictionary<Type, IModelBinder> _internalBindersCache = new();
 
             private readonly MethodInfo _createMethod =
                  typeof(TypedModelBinder).GetMethod(nameof(Create), BindingFlags.NonPublic | BindingFlags.Static);

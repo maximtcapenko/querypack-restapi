@@ -11,6 +11,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QueryPack.RestApi.CodeFirst
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QueryPack.RestApi.DbFirstExample", "src\QueryPack.RestApi.DbFirstExample\QueryPack.RestApi.DbFirstExample.csproj", "{D0250D43-CC56-4EE2-8CEF-B147F6BABFFD}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{846421AE-DFE3-4298-9B0B-B1F12E17DDDF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QueryPack.RestApi.Tests", "tests\QueryPack.RestApi.Tests\QueryPack.RestApi.Tests.csproj", "{3F2E46C9-F26B-43DE-BBED-D92AE6DF5604}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -32,10 +36,15 @@ Global
 		{D0250D43-CC56-4EE2-8CEF-B147F6BABFFD}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D0250D43-CC56-4EE2-8CEF-B147F6BABFFD}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D0250D43-CC56-4EE2-8CEF-B147F6BABFFD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3F2E46C9-F26B-43DE-BBED-D92AE6DF5604}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3F2E46C9-F26B-43DE-BBED-D92AE6DF5604}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3F2E46C9-F26B-43DE-BBED-D92AE6DF5604}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3F2E46C9-F26B-43DE-BBED-D92AE6DF5604}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{5CB47F61-1A3F-466E-BC7B-E0FA30E3986C} = {85747995-5AF4-40B5-9738-3EB305199214}
 		{46B6E175-4986-45D9-A720-C9171E10CCAD} = {85747995-5AF4-40B5-9738-3EB305199214}
 		{D0250D43-CC56-4EE2-8CEF-B147F6BABFFD} = {85747995-5AF4-40B5-9738-3EB305199214}
+		{3F2E46C9-F26B-43DE-BBED-D92AE6DF5604} = {846421AE-DFE3-4298-9B0B-B1F12E17DDDF}
 	EndGlobalSection
 EndGlobal

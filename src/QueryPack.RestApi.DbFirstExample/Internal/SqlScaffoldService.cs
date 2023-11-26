@@ -31,7 +31,7 @@ namespace QueryPack.RestApi.DbFirstExample.Internal
             return scaffolder.ScaffoldModel(_options.ConnectionString, dbModelFactoryOptions, modelReverseEngineerOptions, options);
         }
 
-        static IReverseEngineerScaffolder Create() =>
+        private static IReverseEngineerScaffolder Create() =>
         new ServiceCollection()
             .AddEntityFrameworkSqlServer()
             .AddLogging()

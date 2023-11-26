@@ -9,14 +9,13 @@ namespace QueryPack.RestApi.Model.Internal.Extensions
 
     internal static class CriteriaExtensions
     {
-        static MethodInfo IncludeMethod = typeof(CriteriaExtensions).GetMethod(nameof(Include),
+        static readonly MethodInfo IncludeMethod = typeof(CriteriaExtensions).GetMethod(nameof(Include),
          BindingFlags.Static | BindingFlags.NonPublic);
 
-        static MethodInfo SetOrderMethod = typeof(CriteriaExtensions).GetMethod(nameof(SetOrder),
+        static readonly MethodInfo SetOrderMethod = typeof(CriteriaExtensions).GetMethod(nameof(SetOrder),
          BindingFlags.Static | BindingFlags.NonPublic);
 
-        static ConcurrentDictionary<string, Delegate> _internalMethodsCache
-            = new ConcurrentDictionary<string, Delegate>();
+        static ConcurrentDictionary<string, Delegate> _internalMethodsCache = new();
 
         public static IQueryable<TModel> Include<TModel>(this IQueryable<TModel> self,
             PropertyMetadata candidate, ModelMetadata modelMetadata)

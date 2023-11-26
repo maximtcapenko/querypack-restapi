@@ -11,7 +11,7 @@ namespace QueryPack.RestApi.Mvc.Internal
     internal class ModelKeysOnlyJsonConverterFactory : JsonConverterFactory
     {
         private readonly static ConcurrentDictionary<Type, Func<RestApi.Model.Meta.ModelMetadata, JsonConverter>> _factoryCache
-            = new ConcurrentDictionary<Type, Func<RestApi.Model.Meta.ModelMetadata, JsonConverter>>();
+            = new();
 
         private readonly RestApi.Model.Meta.ModelMetadata _modelMetadata;
 

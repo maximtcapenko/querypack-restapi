@@ -7,7 +7,7 @@ namespace QueryPack.RestApi.Model.Annotations
     [AttributeUsage(AttributeTargets.Property)]
     public class TextSearchAttribute : Attribute, IAnnotation
     {
-        private static readonly MethodInfo _likeMethod = typeof(String).GetMethod(nameof(String.StartsWith),
+        private static readonly MethodInfo _likeMethod = typeof(string).GetMethod(nameof(String.StartsWith),
              new[] { typeof(string) });
 
         public void Apply(IAnnotationContext context)
@@ -22,20 +22,20 @@ namespace QueryPack.RestApi.Model.Annotations
                 Expression resultExpression = null;
                 foreach (var input in inputs)
                 {
-                    if(input is not string) continue;
+                    if (input is not string) continue;
 
-                    if (resultExpression == null)
+                    if (resultExpression is null)
                         resultExpression = Expression.Call(context.PropertyExpression, _likeMethod, Expression.Constant(input));
                     else
                         resultExpression = Expression.Or(resultExpression, Expression.Call(context.PropertyExpression, _likeMethod, Expression.Constant(input)));
                 }
 
-                if (resultExpression != null)
+                if (resultExpression is not null)
                     context.SetResult(resultExpression);
             }
             else
             {
-                if(context.Input is not string) return;
+                if (context.Input is not string) return;
 
                 var likeCallExpression = Expression.Call(context.PropertyExpression, _likeMethod, Expression.Constant(context.Input));
                 context.SetResult(likeCallExpression);
