@@ -10,31 +10,28 @@ namespace QueryPack.RestApi.Mvc.Internal
 
     internal class ModelKeysOnlyJsonConverterFactory : JsonConverterFactory
     {
-        private readonly static ConcurrentDictionary<Type, Func<RestApi.Model.Meta.ModelMetadata, JsonConverter>> _factoryCache
-            = new();
+        private readonly static ConcurrentDictionary<Type, Func<ModelMetadata, JsonConverter>> _factoryCache = new();
 
-        private readonly RestApi.Model.Meta.ModelMetadata _modelMetadata;
+        private readonly ModelMetadata _modelMetadata;
 
-        public ModelKeysOnlyJsonConverterFactory(RestApi.Model.Meta.ModelMetadata modelMetadata)
+        public ModelKeysOnlyJsonConverterFactory(ModelMetadata modelMetadata)
         {
             _modelMetadata = modelMetadata;
         }
 
         public override bool CanConvert(Type typeToConvert)
-        {
-            return typeToConvert == _modelMetadata.ModelType;
-        }
+            => typeToConvert == _modelMetadata.ModelType;
 
         public override JsonConverter CreateConverter(Type typeToConvert, JsonSerializerOptions options)
         {
             var factory = _factoryCache.GetOrAdd(typeToConvert, (type) =>
             {
-                var argType = typeof(RestApi.Model.Meta.ModelMetadata);
+                var argType = typeof(ModelMetadata);
                 var convertorType = typeof(ModelKeysJsonConverter<>).MakeGenericType(type);
                 var parameter = Expression.Parameter(argType);
                 var ctor = convertorType.GetConstructor(BindingFlags.Public | BindingFlags.Instance, new[] { argType });
                 var @new = Expression.New(ctor, parameter);
-                return Expression.Lambda<Func<RestApi.Model.Meta.ModelMetadata, JsonConverter>>(@new, parameter).Compile();
+                return Expression.Lambda<Func<ModelMetadata, JsonConverter>>(@new, parameter).Compile();
             });
 
             return factory(_modelMetadata);
@@ -43,9 +40,9 @@ namespace QueryPack.RestApi.Mvc.Internal
         class ModelKeysJsonConverter<TModel> : JsonConverter<TModel>
             where TModel : class
         {
-            private readonly RestApi.Model.Meta.ModelMetadata _modelMetadata;
+            private readonly ModelMetadata _modelMetadata;
 
-            public ModelKeysJsonConverter(RestApi.Model.Meta.ModelMetadata modelMetadata)
+            public ModelKeysJsonConverter(ModelMetadata modelMetadata)
             {
                 _modelMetadata = modelMetadata;
             }

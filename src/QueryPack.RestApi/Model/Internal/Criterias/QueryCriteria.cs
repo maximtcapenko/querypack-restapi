@@ -9,8 +9,8 @@ namespace QueryPack.RestApi.Model.Internal.Criterias
     internal class QueryCriteria<TModel> : ICriteria<TModel>
         where TModel : class
     {
-        private static MethodInfo _containsMethod = ReflectionUtils.GetContainsMethod();
-        private static MethodInfo _selectMethod = ReflectionUtils.GetSelectMethod();
+        private static readonly MethodInfo _containsMethod = ReflectionUtils.GetContainsMethod();
+        private static readonly MethodInfo _selectMethod = ReflectionUtils.GetSelectMethod();
 
         private readonly Dictionary<PropertyMetadata, IEnumerable<object>> _predicateSelectos;
         private readonly ModelMetadata _modelMetadata;
@@ -145,7 +145,7 @@ namespace QueryPack.RestApi.Model.Internal.Criterias
                     var value = item.Value.First();
                     Expression defaultResultExpression = Expression.Equal(member, Expression.Constant(value));
 
-                    if (propertyMetadata.Annotations.Count() > 0)
+                    if (propertyMetadata.Annotations.Any())
                     {
                         var annotationContext = new QueryAnnotationContext(meta.ModelMetadata, meta.GetModelMetadataProvider(),
                          member, propertyMetadata.PropertyType, value);

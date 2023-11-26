@@ -15,7 +15,7 @@ namespace QueryPack.RestApi.Mvc.Model.Impl
             _factory = BuildFactoryInternal();
         }
 
-        public ICriteriaBinder<TModel> Create() 
+        public ICriteriaBinder<TModel> Create()
             => _factory?.Invoke();
 
         public bool CanCreate(Type type) => typeof(TModel) == type && _factory != null;
@@ -25,20 +25,15 @@ namespace QueryPack.RestApi.Mvc.Model.Impl
             Type binderType = null;
 
             if (_binderType.IsGenericType)
-            {
                 binderType = _binderType.MakeGenericType(typeof(TModel));
-            }
             else
             {
                 if (_binderType.GetInterfaces().Contains(typeof(ICriteriaBinder<TModel>)))
-                {
                     binderType = _binderType;
-                }
             }
             if (binderType != null)
             {
                 var expression = Expression.Lambda<Func<ICriteriaBinder<TModel>>>(Expression.New(binderType));
-
                 return expression.Compile();
             }
 

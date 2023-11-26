@@ -30,10 +30,8 @@ namespace QueryPack.RestApi.Model.Meta.Impl
         }
 
         public void SetResult(Expression annotationExpression)
-        {
-            _annotationExpressions.Add(annotationExpression);
-        }
-
+            => _annotationExpressions.Add(annotationExpression);
+        
         public IEnumerable<Expression> GetAnnotationExpressions() => _annotationExpressions;
     }
 }

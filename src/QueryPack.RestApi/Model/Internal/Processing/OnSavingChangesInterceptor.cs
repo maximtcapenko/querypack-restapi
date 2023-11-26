@@ -8,7 +8,7 @@ namespace QueryPack.RestApi.Model.Internal.Processing
 
     internal class OnSavingChangesInterceptor : ISaveChangesInterceptor
     {
-        private static ConcurrentDictionary<Type, Func<ISavingChangesProcessor>> _processorFactoryContainer = new();
+        private static readonly ConcurrentDictionary<Type, Func<ISavingChangesProcessor>> _processorFactoryContainer = new();
 
         public ValueTask<InterceptionResult<int>> SavingChangesAsync(DbContextEventData eventData, InterceptionResult<int> result, CancellationToken cancellationToken = default)
         {

@@ -80,7 +80,6 @@ namespace QueryPack.RestApi.Mvc.Model.Binders
             }
 
             results.AddRange(values);
-
             return true;
         }
 
@@ -128,7 +127,7 @@ namespace QueryPack.RestApi.Mvc.Model.Binders
                     }
                 }
             }
-
+            
             return true;
         }
     }

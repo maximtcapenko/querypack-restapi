@@ -9,9 +9,9 @@ namespace QueryPack.RestApi.Mvc.Internal
 
     internal class ModelKeysOnlyJsonTypeInfoResolver : DefaultJsonTypeInfoResolver
     {
-        private readonly RestApi.Model.Meta.ModelMetadata _modelMetadata;
+        private readonly ModelMetadata _modelMetadata;
 
-        public ModelKeysOnlyJsonTypeInfoResolver(RestApi.Model.Meta.ModelMetadata modelMetadata)
+        public ModelKeysOnlyJsonTypeInfoResolver(ModelMetadata modelMetadata)
         {
             _modelMetadata = modelMetadata;
         }

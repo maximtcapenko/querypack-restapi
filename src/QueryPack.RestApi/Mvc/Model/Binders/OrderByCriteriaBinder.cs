@@ -19,9 +19,7 @@ namespace QueryPack.RestApi.Mvc.Model.Binders
             {
                 var orderbyResult = Resolve(bindingContext.ValueProvider, OrderByParameterName, property.PropertyName);
                 if (orderbyResult != ValueProviderResult.None)
-                {
                     parameters[property] = orderbyResult;
-                }
             }
 
             var keys = new Dictionary<PropertyMetadata, OrderDirection>();
@@ -44,7 +42,6 @@ namespace QueryPack.RestApi.Mvc.Model.Binders
                 if (!keys.ContainsKey(parameter.Key))
                 {
                     bindingContext.TryAddModelError(parameter.Key.PropertyName, parameter.Value);
-
                     return;
                 }
             }
@@ -52,7 +49,7 @@ namespace QueryPack.RestApi.Mvc.Model.Binders
             bindingContext.SetBindingResult(new OrderByCriteria<TModel>(bindingContext.ModelMetadata, keys));
         }
 
-        private ValueProviderResult Resolve(IValueProvider valueProvider, string queryParameter, string name)
+        private static ValueProviderResult Resolve(IValueProvider valueProvider, string queryParameter, string name)
         {
             var patterns = new[] { "{0}[{1}]", "{0}.{1}" };
 

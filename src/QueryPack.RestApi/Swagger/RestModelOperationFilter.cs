@@ -57,7 +57,7 @@ namespace QueryPack.RestApi.Swagger
             }
         }
 
-        void VisitParameterSchema(Type type, OpenApiSchema parameterSchema, bool nullable = false)
+        private static void VisitParameterSchema(Type type, OpenApiSchema parameterSchema, bool nullable = false)
         {
             if (type == typeof(Guid))
             {
