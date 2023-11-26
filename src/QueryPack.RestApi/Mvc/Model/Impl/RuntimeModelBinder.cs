@@ -9,10 +9,7 @@ namespace QueryPack.RestApi.Mvc.Model.Impl
     {
         public Task BindModelAsync(ModelBindingContext bindingContext)
         {
-            if (bindingContext == null)
-            {
-                throw new ArgumentNullException(nameof(bindingContext));
-            }
+            ArgumentNullException.ThrowIfNull(bindingContext, nameof(bindingContext));
 
             var criteriaBuinderProvider =
                 bindingContext.HttpContext.RequestServices.GetService<ICriteriaBinderProvider>();
@@ -22,9 +19,7 @@ namespace QueryPack.RestApi.Mvc.Model.Impl
             var context = new CriteriaBindingContext<TModel>(bindingContext, criterias, modelMetadataProvider);
 
             foreach (var binder in criteriaBuinderProvider.GetBinders<TModel>())
-            {
                 binder.BindModel(context);
-            }
 
             var criteria = new RootCriteria<TModel>(criterias.ToArray());
 

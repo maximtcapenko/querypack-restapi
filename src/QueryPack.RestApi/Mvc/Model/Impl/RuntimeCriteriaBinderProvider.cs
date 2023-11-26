@@ -12,8 +12,7 @@ namespace QueryPack.RestApi.Mvc.Model.Impl
             _binders = binders;
         }
 
-        private static ConcurrentDictionary<Type, IEnumerable<ICriteriaBinderFactory>> _binderFactoryCache 
-            = new ConcurrentDictionary<Type, IEnumerable<ICriteriaBinderFactory>>();
+        private static ConcurrentDictionary<Type, IEnumerable<ICriteriaBinderFactory>> _binderFactoryCache = new();
 
         public IEnumerable<ICriteriaBinder<TModel>> GetBinders<TModel>() where TModel : class
         {

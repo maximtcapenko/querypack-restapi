@@ -20,9 +20,7 @@ namespace QueryPack.RestApi.Model.Meta.Impl
         public void SetValue(object model, object value)
         {
             if (_collectionSetter is not null)
-            {
                 _setter((TModel)model, _collectionSetter(null, new[] { value }));
-            }
             else
                 _setter((TModel)model, (TValue)value);
         }
