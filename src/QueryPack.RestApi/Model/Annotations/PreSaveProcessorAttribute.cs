@@ -1,10 +1,13 @@
 namespace QueryPack.RestApi.Model.Annotations
 {
+    using Meta;
+
     [AttributeUsage(AttributeTargets.Class)]
-    public class OnSavingChangesAttribute : Attribute
+    public class PreSaveProcessorAttribute : Attribute, IPipelineAnnotation
     {
         public Type ProcessorType { get; }
-        public OnSavingChangesAttribute(Type processorType)
+
+        public PreSaveProcessorAttribute(Type processorType)
         {
             ProcessorType = processorType;
         }

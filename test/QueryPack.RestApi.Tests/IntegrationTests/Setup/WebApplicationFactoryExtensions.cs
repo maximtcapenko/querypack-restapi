@@ -11,20 +11,20 @@ public static class WebApplicationFactoryExtensions
 {
     public static WebApplicationFactory<Program> AsCodeFirstModelContextWebApp<TContext>(this WebApplicationFactory<Program> applicationFactory)
        where TContext : DbContext
-    => applicationFactory.WithWebHostBuilder(builder =>
+       => applicationFactory.WithWebHostBuilder(builder =>
        {
            builder.ConfigureTestServices(AddTestCodeFirstRestModel<TContext>);
        });
 
-    private static void AddTestCodeFirstRestModel<TContext>(IServiceCollection services)
+    public static void AddTestCodeFirstRestModel<TContext>(IServiceCollection services)
         where TContext : DbContext
     {
         services.AddRestModel<TContext>(options =>
         {
             options.GlobalApiPrefix = "/api";
-            options.ContextOptionsBuilder = (dbContextOptionsBuilder)
+            options.ContextOptionsBuilder = (servieProvider, dbContextOptionsBuilder)
                 => dbContextOptionsBuilder.UseInMemoryDatabase("test")
-                                          .EnableOnSavingChangesAnnotations();
+                                          .EnableModelPipelineAnnotations(servieProvider);
 
             options.SerializerOptions = SerializerOptions =>
             {
