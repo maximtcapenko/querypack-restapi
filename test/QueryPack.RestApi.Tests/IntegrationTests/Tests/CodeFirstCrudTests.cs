@@ -3,6 +3,7 @@ using System.Net.Http.Json;
 using AutoFixture.Xunit2;
 using FluentAssertions;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using QueryPack.RestApi.Model;
 using QueryPack.RestApi.Tests.IntegrationTests.Models;
@@ -232,14 +233,21 @@ public class CodeFirstCrudTests : IClassFixture<WebApplicationFactory<Program>>
         using var scope = webApplicationFactory.Services.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<ModelsContext>();
 
+        var versions = await context.Versions.ToListAsync();
+        var entities = await context.Entities.ToListAsync();
+
+        context.Versions.RemoveRange(versions);
+        context.Entities.RemoveRange(entities);
+        await context.SaveChangesAsync();
+
         var random = new Random();
-        var entities = Enumerable.Range(1, 100).Select((index, e) => new Entity
+        entities = Enumerable.Range(1, 100).Select((index, e) => new Entity
         {
             Id = Guid.NewGuid(),
             Name = $"ent_{index}",
             CreatedAt = DateTimeOffset.UtcNow,
             Versions = GenerateVersions(random.Next(1, 9)).ToList()
-        });
+        }).ToList();
 
         foreach (var entity in entities)
         {
