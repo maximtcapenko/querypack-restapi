@@ -9,4 +9,5 @@ public class InterceptionContext : DbContext
     { }
 
     public DbSet<PostPipelineModel> PostPipelineModels { get; set; }
+    public DbSet<PrePipelineModel> PrePipelineModels { get; set; }
 }

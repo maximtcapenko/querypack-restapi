@@ -14,9 +14,7 @@ public class CodeFirstInterceptionTests : IClassFixture<WebApplicationFactory<Pr
 
     public CodeFirstInterceptionTests(WebApplicationFactory<Program> applicationFactory)
     {
-        _applicationFactory = applicationFactory.AsCodeFirstModelContextWebApp<InterceptionContext>(
-            services => services.AddSingleton<PostSaveModelProcessor>()
-        );
+        _applicationFactory = applicationFactory.AsCodeFirstModelContextWebApp<InterceptionContext>();
     }
 
     [Theory, AutoData]
@@ -30,5 +28,16 @@ public class CodeFirstInterceptionTests : IClassFixture<WebApplicationFactory<Pr
         var processor = scope.ServiceProvider.GetRequiredService<PostSaveModelProcessor>();
         processor.CapturedModelInstance.Should().NotBeNull();
         processor.CapturedModelInstance.Should().BeEquivalentTo(instance);
+    }
+
+    [Theory, AutoData]
+    public async Task When_create_new_record_with_pre_save_processing_processor_should_be_invoked(PrePipelineModel instance)
+    {
+        using var scope = _applicationFactory.Services.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<InterceptionContext>();
+        await context.AddAsync(instance);
+        await context.SaveChangesAsync();
+
+        instance.Version.Should().Be("v1.0");
     }
 }

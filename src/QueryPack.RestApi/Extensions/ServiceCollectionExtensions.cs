@@ -14,6 +14,7 @@ namespace QueryPack.RestApi.Extensions
     using Internal;
     using Exceptions;
     using Exceptions.Internal;
+    using Microsoft.Extensions.DependencyInjection.Extensions;
 
     public static class ServiceCollectionExtensions
     {
@@ -85,7 +86,7 @@ namespace QueryPack.RestApi.Extensions
         internal static IEnumerable<Type> AddReadWriteModel<TContext>(this IServiceCollection self, RestModelOptions restModelOptions)
             where TContext : DbContext
         {
-            self.AddDbContext<TContext>((serviceProvider,options) => restModelOptions.ContextOptionsBuilder?.Invoke(serviceProvider, options));
+            self.AddDbContext<TContext>((serviceProvider, options) => restModelOptions.ContextOptionsBuilder?.Invoke(serviceProvider, options));
             self.AddScoped<DbContext>(s =>
             {
                 var ctx = s.GetRequiredService<TContext>();
@@ -98,7 +99,9 @@ namespace QueryPack.RestApi.Extensions
             {
                 if (property.PropertyType.IsGenericType && property.PropertyType.GetGenericTypeDefinition() == typeof(DbSet<>))
                 {
-                    modelTypes.AddRange(property.PropertyType.GetGenericArguments());
+                    var types = property.PropertyType.GetGenericArguments();
+                    modelTypes.AddRange(types);
+                    RegisterPipelineProcessors(self, types);
                 }
             }
 
@@ -116,6 +119,18 @@ namespace QueryPack.RestApi.Extensions
             _ = constr ?? throw new Exception("DataContext ctor not found");
 
             return (DbContext)constr.Invoke(null);
+        }
+
+        internal static void RegisterPipelineProcessors(IServiceCollection services, IEnumerable<Type> modelTypes)
+        {
+
+            var processors = modelTypes.SelectMany(e => e.GetCustomAttributes()
+                                                          .Select(e => e as IPipelineAnnotation)
+                                                          .Where(e => e is not null));
+            foreach(var processor in processors)
+            {
+                services.TryAddSingleton(processor.ProcessorType);
+            }
         }
     }
 }
