@@ -11,12 +11,12 @@ using Xunit;
 
 namespace QueryPack.RestApi.Tests.IntegrationTests.Tests;
 
-public class CodeFirstTests : IClassFixture<WebApplicationFactory<Program>>
+public class CodeFirstCrudTests : IClassFixture<WebApplicationFactory<Program>>
 {
     private const string BasePath = "/api";
     private readonly WebApplicationFactory<Program> _applicationFactory;
 
-    public CodeFirstTests(WebApplicationFactory<Program> applicationFactory)
+    public CodeFirstCrudTests(WebApplicationFactory<Program> applicationFactory)
     {
         _applicationFactory = applicationFactory.AsCodeFirstModelContextWebApp<ModelsContext>();
     }
@@ -251,10 +251,10 @@ public class CodeFirstTests : IClassFixture<WebApplicationFactory<Program>>
 
     private static IEnumerable<Models.Version> GenerateVersions(int count)
         => Enumerable.Range(0, count).Select((index, e) => new Models.Version
-            {
-                Id = Guid.NewGuid(),
-                Value = index,
-                Name = $"ver_{index}",
-                CreatedAt = DateTimeOffset.UtcNow,
-            });
+        {
+            Id = Guid.NewGuid(),
+            Value = index,
+            Name = $"ver_{index}",
+            CreatedAt = DateTimeOffset.UtcNow,
+        });
 }

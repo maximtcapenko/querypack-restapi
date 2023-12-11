@@ -85,7 +85,7 @@ namespace QueryPack.RestApi.Extensions
         internal static IEnumerable<Type> AddReadWriteModel<TContext>(this IServiceCollection self, RestModelOptions restModelOptions)
             where TContext : DbContext
         {
-            self.AddDbContext<TContext>(options => restModelOptions.ContextOptionsBuilder?.Invoke(options));
+            self.AddDbContext<TContext>((serviceProvider,options) => restModelOptions.ContextOptionsBuilder?.Invoke(serviceProvider, options));
             self.AddScoped<DbContext>(s =>
             {
                 var ctx = s.GetRequiredService<TContext>();

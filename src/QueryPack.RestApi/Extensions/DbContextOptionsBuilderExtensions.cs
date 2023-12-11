@@ -5,9 +5,9 @@ namespace QueryPack.RestApi.Extensions
 
     public static class DbContextOptionsBuilderExtensions
     {
-        public static DbContextOptionsBuilder EnableOnSavingChangesAnnotations(this DbContextOptionsBuilder self)
+        public static DbContextOptionsBuilder EnableModelPipelineAnnotations(this DbContextOptionsBuilder self, IServiceProvider serviceProvider)
         {
-            self.AddInterceptors(new OnSavingChangesInterceptor());
+            self.AddInterceptors(new SavePipelineInterceptor(serviceProvider));
             return self;
         }
     }

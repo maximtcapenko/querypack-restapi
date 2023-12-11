@@ -12,9 +12,9 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRestModel<ModelsContext>(options =>
 {
     options.GlobalApiPrefix = "/api";
-    options.ContextOptionsBuilder = (dbContextOptionsBuilder) 
+    options.ContextOptionsBuilder = (serviceProvider, dbContextOptionsBuilder) 
         => dbContextOptionsBuilder.UseInMemoryDatabase("test")
-                                  .EnableOnSavingChangesAnnotations();
+                                  .EnableModelPipelineAnnotations(serviceProvider);
 
     options.SerializerOptions = SerializerOptions =>
     {
