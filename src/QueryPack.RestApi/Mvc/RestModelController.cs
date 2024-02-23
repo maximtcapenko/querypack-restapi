@@ -134,10 +134,13 @@ namespace QueryPack.RestApi.Mvc
         private void Map(TModel from, TModel to)
         {
             var modelMeta = _modelMetadataProvider.GetMetadata(typeof(TModel));
-            foreach (var property in modelMeta.PropertyMetadata.Where(e => !e.IsReadOnly && !e.IsKey))
+            foreach (var property in modelMeta.PropertyMetadata.Where(e => !e.IsReadOnly && !e.IsKey && !e.IsNavigation))
             {
                 var fromValue = property.ValueGetter.GetValue(from);
-                property.ValueSetter.SetValue(to, fromValue);
+                var originValue = property.ValueGetter.GetValue(to);
+
+                if (fromValue != originValue)
+                    property.ValueSetter.SetValue(to, fromValue);
             }
         }
 
@@ -177,6 +180,8 @@ namespace QueryPack.RestApi.Mvc
             var navigationValues = new List<object>();
 
             var propertyValue = propertyMetadata.ValueGetter.GetValue(rootInstance);
+            if (propertyValue is null) return;
+
             var enumeable = propertyValue as IEnumerable;
             var enumertor = enumeable.GetEnumerator();
 
@@ -190,7 +195,7 @@ namespace QueryPack.RestApi.Mvc
                       );
 
                 var navigationDbValue = await loadNavigationByKeysAsync(dbContext, new[] { dbContext, navigationInstance, navigationMeta });
-                
+
                 if (navigationDbValue is not null)
                     navigationValues.Add(navigationDbValue);
                 else
