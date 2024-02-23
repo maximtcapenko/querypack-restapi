@@ -1,6 +1,5 @@
 namespace QueryPack.RestApi.Middlewares
 {
-    using Microsoft.AspNetCore.Diagnostics;
     using Microsoft.AspNetCore.Mvc.Formatters;
     using Microsoft.AspNetCore.Mvc.Infrastructure;
     using Exceptions;

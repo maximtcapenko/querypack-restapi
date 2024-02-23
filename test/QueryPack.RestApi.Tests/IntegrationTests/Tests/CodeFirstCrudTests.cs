@@ -120,6 +120,26 @@ public class CodeFirstCrudTests : IClassFixture<WebApplicationFactory<Program>>
     }
 
     [AutoData, Theory]
+    public async Task When_update_should_return_success(string name)
+    {
+        var client = _applicationFactory.CreateClient();
+
+        await InitTestDatabaseAsync(_applicationFactory);
+
+        var readResponse = await client.GetAsync($"{BasePath}/entities/range?first=0&last=1");
+        readResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var range = await readResponse.Content.ReadFromJsonAsync<Range<Entity>>();
+        var firstEntity = range.Results.First();
+        firstEntity.Name = name;
+        var updateResponse = await client.PutAsJsonAsync($"{BasePath}/entities/{firstEntity.Id}", firstEntity);
+        updateResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var entity = await updateResponse.Content.ReadFromJsonAsync<Entity>();
+        entity.Name.Should().Be(name);
+    }
+
+    [AutoData, Theory]
     public async Task When_create_new_record_then_should_return_success(string name)
     {
         var record = new Entity
