@@ -57,7 +57,7 @@ namespace QueryPack.RestApi.Mvc.Model.Binders
                    string propertyName, Type propertyType, ValueProviderResult valueProviderResult,
                     List<object> results)
         {
-            var values = new List<object>(valueProviderResult.Count());
+            var values = new List<object>(valueProviderResult.Length);
 
             foreach (var value in valueProviderResult)
             {
@@ -83,7 +83,7 @@ namespace QueryPack.RestApi.Mvc.Model.Binders
             return true;
         }
 
-        private bool ResolveParameterValues(
+        private static bool ResolveParameterValues(
             ICriteriaBindingContext<TModel> bindingContext,
             PropertyMetadata propertyMetadata,
             List<PropertyMetadata> parent, List<PropertyMetadata> visited, Dictionary<string, IEnumerable<object>> results)
@@ -95,7 +95,7 @@ namespace QueryPack.RestApi.Mvc.Model.Binders
             var metadataProvider = propertyMetadata.GetModelMetadataProvider();
             var modelMeta = metadataProvider.GetMetadata(propertyMetadata.PropertyType);
 
-            if (modelMeta != null)
+            if (modelMeta is not null)
             {
                 foreach (var propertyMeta in modelMeta.PropertyMetadata)
                 {

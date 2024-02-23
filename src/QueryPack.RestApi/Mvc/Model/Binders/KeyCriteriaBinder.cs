@@ -26,7 +26,7 @@ namespace QueryPack.RestApi.Mvc.Model.Binders
                 }
                 else
                 {
-                    if (keys.Count() != result.Count())
+                    if (keys.Count() != result.Length)
                     {
                         bindingContext.TryAddModelError(KeyParameterName, result);
                         return;
@@ -52,7 +52,7 @@ namespace QueryPack.RestApi.Mvc.Model.Binders
                                 values.Add(parameterValue);
                         }
 
-                        if (values.Count() == 0)
+                        if (values.Count == 0)
                         {
                             bindingContext.TryAddModelError(KeyParameterName, result);
                             return;
