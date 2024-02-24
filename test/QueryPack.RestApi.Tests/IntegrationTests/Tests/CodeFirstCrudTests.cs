@@ -120,7 +120,7 @@ public class CodeFirstCrudTests : IClassFixture<WebApplicationFactory<Program>>
     }
 
     [AutoData, Theory]
-    public async Task When_update_should_return_success(string name)
+    public async Task When_entity_is_updating_response_should_be_success(string name)
     {
         var client = _applicationFactory.CreateClient();
 
@@ -137,6 +137,32 @@ public class CodeFirstCrudTests : IClassFixture<WebApplicationFactory<Program>>
 
         var entity = await updateResponse.Content.ReadFromJsonAsync<Entity>();
         entity.Name.Should().Be(name);
+    }
+
+    [Fact]
+    public async Task When_delete_depended_entity_response_should_be_success()
+    {
+        static async Task<Entity> getEntity(HttpClient client, string url)
+        {
+            var readResponse = await client.GetAsync(url);
+            if (readResponse.StatusCode is HttpStatusCode.OK)
+                return await readResponse.Content.ReadFromJsonAsync<Entity>();
+            else return null;
+        }
+
+        var client = _applicationFactory.CreateClient();
+
+        await InitTestDatabaseAsync(_applicationFactory);
+
+        var entity = await getEntity(client, $"{BasePath}/entities/single?include=dependency");
+        entity.Should().NotBeNull();
+
+        var deleteResponse = await client.DeleteAsync($"{BasePath}/dependencies/{entity.Dependency.Id}");
+        deleteResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        entity = await getEntity(client, $"{BasePath}/entities/single?id={entity.Id}&include=dependency");
+        entity.Should().NotBeNull();
+        entity.Dependency.Should().BeNull();
     }
 
     [AutoData, Theory]
@@ -266,6 +292,10 @@ public class CodeFirstCrudTests : IClassFixture<WebApplicationFactory<Program>>
             Id = Guid.NewGuid(),
             Name = $"ent_{index}",
             CreatedAt = DateTimeOffset.UtcNow,
+            Dependency = new Dependency
+            {
+                Id = Guid.NewGuid()
+            },
             Versions = GenerateVersions(random.Next(1, 9)).ToList()
         }).ToList();
 

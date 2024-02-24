@@ -88,13 +88,16 @@ namespace QueryPack.RestApi.Mvc
         }
 
         [HttpGet, Route("single")]
-        public Task<TModel> GetAsync([FromQuery] ICriteria<TModel> criteria)
+        public async Task<ActionResult<TModel>> GetAsync([FromQuery] ICriteria<TModel> criteria)
         {
             var set = _dbContext.Set<TModel>();
             var container = new ModelReadQueryContainer(set);
             criteria.Apply(container);
 
-            return container.Query.FirstOrDefaultAsync();
+            var result = await container.Query.FirstOrDefaultAsync();
+            if (result is null) return NotFound();
+
+            return result;
         }
 
         [HttpGet, Route("")]
