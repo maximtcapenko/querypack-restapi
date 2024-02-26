@@ -50,7 +50,7 @@ namespace QueryPack.RestApi.Mvc
                 return NotFound();
 
             await ProcessNavigationsAsync(model);
-            Map(model, result);
+            MapProperties(model, result);
             await _dbContext.SaveChangesAsync();
 
             return result;
@@ -134,14 +134,16 @@ namespace QueryPack.RestApi.Mvc
             return new Range<TModel>(range.First, range.Last, results, count);
         }
 
-        private void Map(TModel from, TModel to)
+        private void MapProperties(TModel from, TModel to)
         {
             var modelMeta = _modelMetadataProvider.GetMetadata(typeof(TModel));
-            foreach (var property in modelMeta.PropertyMetadata.Where(e => !e.IsReadOnly && !e.IsKey && !e.IsNavigation))
+            foreach (var property in modelMeta.PropertyMetadata.Where(e => !e.IsReadOnly && !e.IsKey))
             {
                 var fromValue = property.ValueGetter.GetValue(from);
                 var originValue = property.ValueGetter.GetValue(to);
 
+                if(property.IsNavigation && fromValue is null) continue;
+                
                 if (fromValue != originValue)
                     property.ValueSetter.SetValue(to, fromValue);
             }

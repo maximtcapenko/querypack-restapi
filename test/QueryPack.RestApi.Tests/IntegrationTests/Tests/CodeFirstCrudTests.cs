@@ -231,6 +231,42 @@ public class CodeFirstCrudTests : IClassFixture<WebApplicationFactory<Program>>
     }
 
     [AutoData, Theory]
+    public async Task When_create_new_record_and_after_attach_related_response_should_be_success(string name)
+    {
+        var client = _applicationFactory.CreateClient();
+        await InitTestDatabaseAsync(_applicationFactory);
+
+        var versions = (await GetAllVersions(client)).ToList();
+
+        var record = new Entity
+        {
+            Id = Guid.NewGuid(),
+            Name = name,
+            CreatedAt = DateTimeOffset.UtcNow,
+            Versions = versions.Take(3).ToList()
+        };
+
+        var response = await client.PostAsJsonAsync($"{BasePath}/entities", record);
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var keys = await response.Content.ReadFromJsonAsync<Dictionary<string, Guid>>();
+
+        var readResponse = await client.GetAsync($"{BasePath}/entities/single?id={keys["id"]}&include=versions");
+        readResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var entity = await readResponse.Content.ReadFromJsonAsync<Entity>();
+        entity.Versions.Should().HaveCount(3);
+
+        entity.Versions.Add(versions[4]);
+
+        var updateResponse = await client.PutAsJsonAsync($"{BasePath}/entities/{entity.Id}", entity);
+        updateResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        entity = await updateResponse.Content.ReadFromJsonAsync<Entity>();
+        entity.Versions.Should().HaveCount(4);
+        entity.Versions.Select(e => e.Id).Should().Contain(versions[4].Id);
+    }
+
+    [AutoData, Theory]
     public async Task When_create_new_record_with_attachment_then_should_add_new_attachemnet_and_return_success(string name)
     {
         var client = _applicationFactory.CreateClient();
