@@ -41,11 +41,11 @@ namespace QueryPack.RestApi.Mvc
         [HttpPut, Route("{key}")]
         public async Task<ActionResult<TModel>> UpdateAsync([FromRoute] ICriteria<TModel> key, TModel model)
         {
-            var set = _dbContext.Set<TModel>();
-            var container = new ModelReadQueryContainer(set);
-            key.Apply(container);
+            var queryset = _dbContext.Set<TModel>();
+            var query = new ReadOnlyQuery(queryset);
+            key.Apply(query);
 
-            var result = await container.Query.FirstOrDefaultAsync();
+            var result = await query.Query.FirstOrDefaultAsync();
             if (result == null)
                 return NotFound();
 
@@ -59,11 +59,11 @@ namespace QueryPack.RestApi.Mvc
         [HttpDelete, Route("{key}")]
         public async Task<IActionResult> DeleteAsync([FromRoute] ICriteria<TModel> key)
         {
-            var set = _dbContext.Set<TModel>();
-            var container = new ModelReadQueryContainer(set);
-            key.Apply(container);
+            var queryset = _dbContext.Set<TModel>();
+            var query = new ReadOnlyQuery(queryset);
+            key.Apply(query);
 
-            var result = await container.Query.FirstOrDefaultAsync();
+            var result = await query.Query.FirstOrDefaultAsync();
             if (result == null)
                 return NotFound();
 
@@ -75,11 +75,11 @@ namespace QueryPack.RestApi.Mvc
         [HttpGet, Route("{key}")]
         public async Task<ActionResult<TModel>> GetByKeyAsync([FromRoute] ICriteria<TModel> key)
         {
-            var set = _dbContext.Set<TModel>();
-            var container = new ModelReadQueryContainer(set);
-            key.Apply(container);
+            var queryset = _dbContext.Set<TModel>();
+            var query = new ReadOnlyQuery(queryset);
+            key.Apply(query);
 
-            var result = await container.Query.FirstOrDefaultAsync();
+            var result = await query.Query.FirstOrDefaultAsync();
 
             if (result == null)
                 return NotFound();
@@ -90,11 +90,11 @@ namespace QueryPack.RestApi.Mvc
         [HttpGet, Route("single")]
         public async Task<ActionResult<TModel>> GetAsync([FromQuery] ICriteria<TModel> criteria)
         {
-            var set = _dbContext.Set<TModel>();
-            var container = new ModelReadQueryContainer(set);
-            criteria.Apply(container);
+            var queryset = _dbContext.Set<TModel>();
+            var query = new ReadOnlyQuery(queryset);
+            criteria.Apply(query);
 
-            var result = await container.Query.FirstOrDefaultAsync();
+            var result = await query.Query.FirstOrDefaultAsync();
             if (result is null) return NotFound();
 
             return result;
@@ -103,11 +103,11 @@ namespace QueryPack.RestApi.Mvc
         [HttpGet, Route("")]
         public async Task<IEnumerable<TModel>> GetCollectionAsync([FromQuery] ICriteria<TModel> criteria)
         {
-            var set = _dbContext.Set<TModel>();
-            var container = new ModelReadQueryContainer(set);
-            criteria.Apply(container);
+            var queryset = _dbContext.Set<TModel>();
+            var query = new ReadOnlyQuery(queryset);
+            criteria.Apply(query);
 
-            var result = await container.Query.ToListAsync();
+            var result = await query.Query.ToListAsync();
 
             return result;
         }
@@ -115,21 +115,20 @@ namespace QueryPack.RestApi.Mvc
         [HttpGet, Route("range")]
         public async Task<Range<TModel>> GetRangeAsync([FromQuery] ICriteria<TModel> criteria, [FromQuery] RangeQuery range)
         {
-            var set = _dbContext.Set<TModel>();
+            var queryset = _dbContext.Set<TModel>();
 
-            var container = new ModelReadQueryContainer(set);
-            criteria.Apply(container);
+            var query = new ReadOnlyQuery(queryset);
+            criteria.Apply(query);
 
             if (range.First < 0) range.First = 0;
             if (range.Last < range.First) range.Last = range.First;
 
-            var query = container.Query;
             var rangeQuery = (range.Last > 0 && range.Last >= range.First)
-                ? query.Skip(range.First).Take(range.Last - range.First + 1)
-                : query;
+                ? query.Query.Skip(range.First).Take(range.Last - range.First + 1)
+                : query.Query;
 
             var results = await rangeQuery.ToListAsync();
-            var count = await query.CountAsync();
+            var count = await query.Query.CountAsync();
 
             return new Range<TModel>(range.First, range.Last, results, count);
         }
@@ -210,9 +209,9 @@ namespace QueryPack.RestApi.Mvc
             propertyMetadata.ValueSetter.SetValue(rootInstance, navigationValues);
         }
 
-        private class ModelReadQueryContainer : IQueryContainer<TModel>
+        private sealed class ReadOnlyQuery : IQuery<TModel>
         {
-            public ModelReadQueryContainer(IQueryable<TModel> query)
+            public ReadOnlyQuery(IQueryable<TModel> query)
             {
                 Query = query;
             }

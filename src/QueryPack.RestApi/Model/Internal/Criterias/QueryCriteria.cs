@@ -21,7 +21,7 @@ namespace QueryPack.RestApi.Model.Internal.Criterias
             _modelMetadata = modelMetadata;
         }
 
-        public void Apply(IQueryContainer<TModel> query)
+        public void Apply(IQuery<TModel> query)
         {
             foreach (var selector in _predicateSelectos)
             {

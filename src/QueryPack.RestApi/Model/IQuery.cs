@@ -1,6 +1,6 @@
 namespace QueryPack.RestApi.Model
 {
-    public interface IQueryContainer<TModel>
+    public interface IQuery<TModel>
         where TModel : class
     {
         IQueryable<TModel> Query { get; set; }
