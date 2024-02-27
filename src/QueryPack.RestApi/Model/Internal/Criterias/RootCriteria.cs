@@ -13,10 +13,10 @@ namespace QueryPack.RestApi.Model.Internal.Criterias
                 _internalCriterias = criterias;
         }
 
-        public void Apply(IQuery<TModel> query)
+        public void Apply(IQuerySet<TModel> queryset)
         {
             foreach (var criteria in _internalCriterias)
-                criteria.Apply(query);
+                criteria.Apply(queryset);
         }
     }
 }

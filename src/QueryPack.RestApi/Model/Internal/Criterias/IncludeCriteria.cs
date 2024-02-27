@@ -16,12 +16,12 @@ namespace QueryPack.RestApi.Model.Internal.Criterias
             _modelMetadata = modelMetadata;
         }
 
-        public void Apply(IQuery<TModel> query)
+        public void Apply(IQuerySet<TModel> queryset)
         {
             foreach (var navigation in _navigations)
             {
                 if (_modelMetadata.Contains(navigation))
-                    query.Query = query.Query.Include(navigation, _modelMetadata);
+                    queryset.Query = queryset.Query.Include(navigation, _modelMetadata);
             }
         }
     }

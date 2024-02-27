@@ -21,7 +21,7 @@ namespace QueryPack.RestApi.Model.Internal.Criterias
             _modelMetadata = modelMetadata;
         }
 
-        public void Apply(IQuery<TModel> query)
+        public void Apply(IQuerySet<TModel> queryset)
         {
             foreach (var selector in _predicateSelectos)
             {
@@ -63,7 +63,7 @@ namespace QueryPack.RestApi.Model.Internal.Criterias
                 ArgumentNullException.ThrowIfNull(resultExpressionPredicate);
 
                 var predicate = Expression.Lambda<Func<TModel, bool>>(resultExpressionPredicate, (ParameterExpression)_modelMetadata.InstanceExpression);
-                query.Query = query.Query.Where(predicate);
+                queryset.Query = queryset.Query.Where(predicate);
             }
         }
 
