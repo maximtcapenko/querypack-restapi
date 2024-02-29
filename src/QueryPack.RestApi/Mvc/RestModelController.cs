@@ -34,7 +34,6 @@ namespace QueryPack.RestApi.Mvc
             return model;
         }
 
-
         [HttpPut, Route("{key}")]
         public async Task<ActionResult<TModel>> UpdateAsync([FromRoute] ICriteria<TModel> key, TModel model)
         {
