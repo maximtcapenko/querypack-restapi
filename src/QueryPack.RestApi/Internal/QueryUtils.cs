@@ -22,5 +22,13 @@ namespace QueryPack.RestApi.Internal
             var where = Expression.Lambda<Func<T, bool>>(expression, meta.InstanceExpression as ParameterExpression);
             return await context.Set<T>().FirstOrDefaultAsync(where);
         }
+
+        internal static Func<DbContext, object, ModelMetadata, Task<object>> GetEntityLoader(Type modelType)
+        {
+            var method =(Func<object, object[], Task<object>>)_internalMethodsCache.GetOrAdd(modelType,
+              type => MethodFactory.CreateGenericMethod<Task<object>>(LoadAsyncMethod.MakeGenericMethod(modelType)));
+            
+            return (context, instance, meta) => method(context, new[] { context, instance, meta });
+        }
     }
 }
