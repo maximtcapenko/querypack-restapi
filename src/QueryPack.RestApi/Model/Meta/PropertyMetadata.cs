@@ -49,7 +49,7 @@ namespace QueryPack.RestApi.Model.Meta
             _isNavigation = new Lazy<bool>(() => ResolveNavigation(propertyInfo, metadataProvider));
             var buildGetter = GetType().GetMethod(nameof(BuildAccessors), BindingFlags.Static | BindingFlags.NonPublic);
             var accessors = (Accessors)buildGetter.MakeGenericMethod(modelMetadata.ModelType, PropertyType)
-                .Invoke(null, new object[] { propertyInfo, PropertyExpression, modelMetadata.InstanceExpression });
+                .Invoke(null, [propertyInfo, PropertyExpression, modelMetadata.InstanceExpression]);
 
             ValueGetter = accessors.ValueGetter;
             ValueSetter = accessors.ValueSetter;
@@ -92,7 +92,7 @@ namespace QueryPack.RestApi.Model.Meta
             {
                 return true;
             }
-            if (property.Name.Equals($"{modelMetadata.ModelType.Name}{property.Name}",
+            if (property.Name.Equals($"{modelMetadata.ModelType.Name}Id",
                 StringComparison.OrdinalIgnoreCase) ||
                 property.Name.Equals("Id", StringComparison.OrdinalIgnoreCase))
             {

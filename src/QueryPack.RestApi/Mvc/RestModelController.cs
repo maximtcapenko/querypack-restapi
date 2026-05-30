@@ -9,19 +9,12 @@ namespace QueryPack.RestApi.Mvc
     using RestApi.Model.Meta;
 
     [ApiController]
-    internal class RestModelController<TModel> : ControllerBase
+    internal class RestModelController<TModel>(DbContext dbContext,
+        IModelMetadataProvider modelMetadataProvider) : ControllerBase
         where TModel : class
     {
-        private readonly DbContext _dbContext;
-        private readonly IModelMetadataProvider _modelMetadataProvider;
-
-        public RestModelController(DbContext dbContext,
-            IModelMetadataProvider modelMetadataProvider)
-        {
-            _dbContext = dbContext;
-            _modelMetadataProvider = modelMetadataProvider;
-        }
-
+        private readonly DbContext _dbContext = dbContext;
+        private readonly IModelMetadataProvider _modelMetadataProvider = modelMetadataProvider;
 
         [HttpPost, Route("")]
         [KeysResultFilter]
@@ -145,7 +138,7 @@ namespace QueryPack.RestApi.Mvc
                 if (navigation.IsCollection)
                 {
                     await navigation.ProcessCollectionNavigationAsync(_dbContext, model, _modelMetadataProvider);
-                    return;
+                    continue;
                 }
 
                 // load dependencies if they exists
@@ -166,14 +159,9 @@ namespace QueryPack.RestApi.Mvc
             }
         }
 
-        private sealed class ReadOnlyQuerySet : IQuerySet<TModel>
+        private sealed class ReadOnlyQuerySet(IQueryable<TModel> query) : IQuerySet<TModel>
         {
-            public ReadOnlyQuerySet(IQueryable<TModel> query)
-            {
-                Query = query;
-            }
-
-            public IQueryable<TModel> Query { get; set; }
+            public IQueryable<TModel> Query { get; set; } = query;
         }
     }
 }

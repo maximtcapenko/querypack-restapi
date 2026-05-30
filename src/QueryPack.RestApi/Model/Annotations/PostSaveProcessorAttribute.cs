@@ -3,13 +3,8 @@
     using Meta;
     
     [AttributeUsage(AttributeTargets.Class)]
-    public class PostSaveProcessorAttribute : Attribute, IPipelineAnnotation
+    public class PostSaveProcessorAttribute(Type processorType) : Attribute, IPipelineAnnotation
     {
-        public Type ProcessorType { get; }
-
-        public PostSaveProcessorAttribute(Type processorType)
-        {
-            ProcessorType = processorType;
-        }
+        public Type ProcessorType { get; } = processorType;
     }
 }

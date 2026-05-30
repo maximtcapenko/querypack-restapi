@@ -4,17 +4,11 @@ namespace QueryPack.RestApi.Model.Internal.Criterias
     using Microsoft.EntityFrameworkCore;
     using Meta;
 
-    internal class IncludeCriteria<TModel> : ICriteria<TModel>
+    internal class IncludeCriteria<TModel>(ModelMetadata modelMetadata, IEnumerable<PropertyMetadata> navigations) : ICriteria<TModel>
         where TModel : class
     {
-        private readonly IEnumerable<PropertyMetadata> _navigations;
-        private readonly ModelMetadata _modelMetadata;
-
-        public IncludeCriteria(ModelMetadata modelMetadata, IEnumerable<PropertyMetadata> navigations)
-        {
-            _navigations = navigations;
-            _modelMetadata = modelMetadata;
-        }
+        private readonly IEnumerable<PropertyMetadata> _navigations = navigations;
+        private readonly ModelMetadata _modelMetadata = modelMetadata;
 
         public void Apply(IQuerySet<TModel> queryset)
         {

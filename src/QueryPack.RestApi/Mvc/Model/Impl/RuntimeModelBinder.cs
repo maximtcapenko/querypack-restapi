@@ -21,7 +21,7 @@ namespace QueryPack.RestApi.Mvc.Model.Impl
             foreach (var binder in criteriaBuinderProvider.GetBinders<TModel>())
                 binder.BindModel(context);
 
-            var criteria = new RootCriteria<TModel>(criterias.ToArray());
+            var criteria = new RootCriteria<TModel>([.. criterias]);
 
             bindingContext.Result = ModelBindingResult.Success(criteria);
 

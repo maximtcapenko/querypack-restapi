@@ -19,8 +19,10 @@ namespace QueryPack.RestApi.Swagger
             if (criteriaParameter != null)
             {
                 var target = operation.Parameters.FirstOrDefault(e => e.Name == criteriaParameter.Name);
+                if (target is null) return;
                 operation.Parameters.Remove(target);
                 var parameterDescriptor = context.ApiDescription.ActionDescriptor.Parameters.FirstOrDefault(e => e.Name == target.Name);
+                if (parameterDescriptor is null) return;
                 if (parameterDescriptor.BindingInfo.BindingSource == Microsoft.AspNetCore.Mvc.ModelBinding.BindingSource.Path)
                 {
                     var modelMetadata = _modelMetadataProvider.GetMetadata(criteriaParameter.ParameterType.GetGenericArguments()[0]);

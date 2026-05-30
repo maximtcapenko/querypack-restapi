@@ -3,15 +3,9 @@ namespace QueryPack.RestApi.Mvc.Model.Impl
     using System.Collections.Concurrent;
     using Intrnal;
 
-    internal class RuntimeCriteriaBinderProvider : ICriteriaBinderProvider
+    internal class RuntimeCriteriaBinderProvider(params Type[] binders) : ICriteriaBinderProvider
     {
-        private readonly IEnumerable<Type> _binders;
-
-        public RuntimeCriteriaBinderProvider(params Type[] binders)
-        {
-            _binders = binders;
-        }
-
+        private readonly IEnumerable<Type> _binders = binders;
         private static ConcurrentDictionary<Type, IEnumerable<ICriteriaBinderFactory>> _binderFactoryCache = new();
 
         public IEnumerable<ICriteriaBinder<TModel>> GetBinders<TModel>() where TModel : class

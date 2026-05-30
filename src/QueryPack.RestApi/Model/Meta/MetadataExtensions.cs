@@ -9,7 +9,7 @@ namespace QueryPack.RestApi.Model.Meta
            => self.PropertyMetadata.FirstOrDefault(e => (e.PropertyExpression as MemberExpression).Member.Equals(member));
 
         public static IEnumerable<PropertyMetadata> GetNavigations(this ModelMetadata self)
-            => self.PropertyMetadata.Where(e => e.IsNavigation && !e.IsIgnored);
+            => self.PropertyMetadata.Where(e => e.IsNavigation && !e.IsIgnored && !e.IsReadOnly);
 
         public static IEnumerable<PropertyMetadata> GetKeys(this ModelMetadata self)
              => self.PropertyMetadata.Where(e => e.IsKey);

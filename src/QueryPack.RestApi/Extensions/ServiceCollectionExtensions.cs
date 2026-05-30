@@ -42,7 +42,7 @@ namespace QueryPack.RestApi.Extensions
             var criterias = new Type[] { typeof(QueryCriteriaBinder<>), typeof(IncludeCriteriaBinder<>), typeof(OrderByCriteriaBinder<>), typeof(KeyCriteriaBinder<>) };
 
             self.AddSingleton<ICriteriaBinderProvider>(
-                new RuntimeCriteriaBinderProvider(criterias.Concat(modelOptions.Criterias).ToArray()));
+                new RuntimeCriteriaBinderProvider([.. criterias, .. modelOptions.Criterias]));
 
             self.AddSingleton<IExceptionHandlingResultFactory>(new ExceptionHandlingResultFactoryImpl(modelOptions.ExceptionMessageBuilders));
 
@@ -69,8 +69,8 @@ namespace QueryPack.RestApi.Extensions
             var referencedAssemblies = scaffolder.GetType().Assembly.GetReferencedAssemblies()
                            .Select(a => Assembly.Load(a));
 
-            var dynamicContextAssembly = CSharpCompilationUtils.Compile(scaffoldedModel.AdditionalFiles.Select(e => e.Code).Concat(new[] { scaffoldedModel.ContextFile.Code }),
-                 referencedAssemblies.ToArray());
+            var dynamicContextAssembly = CSharpCompilationUtils.Compile(scaffoldedModel.AdditionalFiles.Select(e => e.Code).Concat([scaffoldedModel.ContextFile.Code]),
+                 [.. referencedAssemblies]);
 
             var dynamicContext = GetContext(dynamicContextAssembly, rootNamesapce, scaffoldedContextClassName);
 
@@ -78,7 +78,7 @@ namespace QueryPack.RestApi.Extensions
             && e.IsGenericMethod);
 
             var addRestModelGeneric = addRestModel.MakeGenericMethod(dynamicContext.GetType());
-            addRestModelGeneric.Invoke(null, new object[] { self, options });
+            addRestModelGeneric.Invoke(null, [self, options]);
 
             return self;
         }

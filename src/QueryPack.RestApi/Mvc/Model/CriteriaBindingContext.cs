@@ -3,20 +3,13 @@ namespace QueryPack.RestApi.Mvc.Model
     using Microsoft.AspNetCore.Mvc.ModelBinding;
     using RestApi.Model;
 
-    internal class CriteriaBindingContext<TModel> : ICriteriaBindingContext<TModel>
+    internal class CriteriaBindingContext<TModel>(ModelBindingContext bindingContext,
+        List<ICriteria<TModel>> criterias, RestApi.Model.Meta.IModelMetadataProvider modelMetadataProvider) : ICriteriaBindingContext<TModel>
         where TModel : class
     {
-        private readonly ModelBindingContext _bindingContext;
-        private readonly List<ICriteria<TModel>> _criterias;
-        private readonly RestApi.Model.Meta.IModelMetadataProvider _modelMetadataProvider;
-
-        public CriteriaBindingContext(ModelBindingContext bindingContext,
-            List<ICriteria<TModel>> criterias, RestApi.Model.Meta.IModelMetadataProvider modelMetadataProvider)
-        {
-            _bindingContext = bindingContext;
-            _criterias = criterias;
-            _modelMetadataProvider = modelMetadataProvider;
-        }
+        private readonly ModelBindingContext _bindingContext = bindingContext;
+        private readonly List<ICriteria<TModel>> _criterias = criterias;
+        private readonly RestApi.Model.Meta.IModelMetadataProvider _modelMetadataProvider = modelMetadataProvider;
 
         public IValueProvider ValueProvider => _bindingContext.ValueProvider;
 

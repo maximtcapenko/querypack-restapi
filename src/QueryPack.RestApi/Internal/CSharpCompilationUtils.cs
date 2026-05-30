@@ -18,7 +18,7 @@ namespace QueryPack.RestApi.Internal
                 metadataReferences.Add(MetadataReference.CreateFromFile(assembly.Location));
             }
 
-            var options = CSharpParseOptions.Default.WithLanguageVersion(LanguageVersion.CSharp10);
+            var options = CSharpParseOptions.Default.WithLanguageVersion(LanguageVersion.Latest);
             var parsedSyntaxTrees = sourceFiles.Select(f => SyntaxFactory.ParseSyntaxTree(f, options));
 
             var compilation = CSharpCompilation.Create($"DynamicAssembly_{Guid.NewGuid().ToString().Underscore()}",

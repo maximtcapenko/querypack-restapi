@@ -28,7 +28,7 @@ namespace QueryPack.RestApi.Internal
             var method =(Func<object, object[], Task<object>>)_internalMethodsCache.GetOrAdd(modelType,
               type => MethodFactory.CreateGenericMethod<Task<object>>(LoadAsyncMethod.MakeGenericMethod(modelType)));
             
-            return (context, instance, meta) => method(context, new[] { context, instance, meta });
+            return (context, instance, meta) => method(context, [context, instance, meta]);
         }
     }
 }

@@ -20,18 +20,13 @@ namespace QueryPack.RestApi.Mvc.Model
             return null;
         }
 
-        class TypedModelBinder : IModelBinder
+        class TypedModelBinder(Type typeParam) : IModelBinder
         {
             private static readonly ConcurrentDictionary<Type, IModelBinder> _internalBindersCache = new();
 
             private readonly MethodInfo _createMethod =
                  typeof(TypedModelBinder).GetMethod(nameof(Create), BindingFlags.NonPublic | BindingFlags.Static);
-            private readonly Type _targetType;
-
-            public TypedModelBinder(Type typeParam)
-            {
-                _targetType = typeParam;
-            }
+            private readonly Type _targetType = typeParam;
 
             public Task BindModelAsync(ModelBindingContext bindingContext)
             {

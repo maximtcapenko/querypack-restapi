@@ -4,7 +4,7 @@ namespace QueryPack.RestApi.Model.Meta.Impl
 
     internal class QueryAnnotationContext : IAnnotationContext
     {
-        private readonly List<Expression> _annotationExpressions = new();
+        private readonly List<Expression> _annotationExpressions = [];
 
         public ModelMetadata ModelMetadata { get; }
         public IModelMetadataProvider ModelMetadataProvider { get; }

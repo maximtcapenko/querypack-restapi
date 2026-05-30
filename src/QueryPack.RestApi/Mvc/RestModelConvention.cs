@@ -6,18 +6,13 @@ namespace QueryPack.RestApi.Mvc
     using Microsoft.AspNetCore.Mvc.ApplicationModels;
     using RestApi.Model;
 
-    internal class RestModelConvention : IControllerModelConvention
+    internal class RestModelConvention(RestModelOptions options) : IControllerModelConvention
     {
-        private readonly RestModelOptions _options;
-
-        public RestModelConvention(RestModelOptions options)
-        {
-            _options = options;
-        }
+        private readonly RestModelOptions _options = options;
 
         public void Apply(ControllerModel controller)
         {
-            string resolvePrefix(string globalPrefix) => string.IsNullOrEmpty(globalPrefix)? "/api" : globalPrefix;
+            static string resolvePrefix(string globalPrefix) => string.IsNullOrEmpty(globalPrefix)? "/api" : globalPrefix;
 
             if (controller.ControllerType.IsGenericType)
             {

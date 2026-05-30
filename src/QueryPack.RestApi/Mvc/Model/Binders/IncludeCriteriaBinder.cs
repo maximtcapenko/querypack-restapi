@@ -21,7 +21,7 @@ namespace QueryPack.RestApi.Mvc.Model.Binders
             }
         }
 
-        static bool Compare(RestApi.Model.Meta.PropertyMetadata propertyMetadata, ValueProviderResult valueProviderResult)
+        static bool Compare(PropertyMetadata propertyMetadata, ValueProviderResult valueProviderResult)
         {
             var name = propertyMetadata.PropertyName;
             // try origin name

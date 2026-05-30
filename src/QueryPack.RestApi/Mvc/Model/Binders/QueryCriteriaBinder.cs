@@ -19,7 +19,7 @@ namespace QueryPack.RestApi.Mvc.Model.Binders
                 if (propertyMetadata.IsNavigation)
                 {
                     var results = new Dictionary<string, IEnumerable<object>>();
-                    if (!ResolveParameterValues(bindingContext, propertyMetadata, new List<PropertyMetadata>(), new List<PropertyMetadata>(), results))
+                    if (!ResolveParameterValues(bindingContext, propertyMetadata, [], [], results))
                         return;
 
                     if (results.Any())

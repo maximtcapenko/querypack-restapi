@@ -10,21 +10,17 @@ namespace QueryPack.RestApi.Middlewares
         {
             var requestServices = context.RequestServices;
             var messageFactory = requestServices.GetRequiredService<IExceptionHandlingResultFactory>();
+            var selector = context.RequestServices.GetRequiredService<OutputFormatterSelector>();
+            var writerFactory = context.RequestServices.GetRequiredService<IHttpResponseStreamWriterFactory>();
 
-            if (messageFactory != null)
-            {
-                var selector = context.RequestServices.GetRequiredService<OutputFormatterSelector>();
-                var writerFactory = context.RequestServices.GetRequiredService<IHttpResponseStreamWriterFactory>();
+            var message = await messageFactory.CreateAsync(context);
 
-                var message = await messageFactory.CreateAsync(context);
+            var formatterContext = new OutputFormatterWriteContext(context, writerFactory.CreateWriter, message.GetType(), message);
+            var selectedFormatter = selector.SelectFormatter(formatterContext, Array.Empty<IOutputFormatter>(), []);
 
-                var formatterContext = new OutputFormatterWriteContext(context, writerFactory.CreateWriter, message.GetType(), message);
-                var selectedFormatter = selector.SelectFormatter(formatterContext, Array.Empty<IOutputFormatter>(), new MediaTypeCollection());
-                
-                context.Response.StatusCode = message.Status;
-                context.Response.ContentType = context.Request.ContentType;
-                await selectedFormatter.WriteAsync(formatterContext);
-            }
+            context.Response.StatusCode = message.Status;
+            context.Response.ContentType = context.Request.ContentType;
+            await selectedFormatter.WriteAsync(formatterContext);
         }
     }
 }

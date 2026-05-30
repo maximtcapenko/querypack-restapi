@@ -73,7 +73,7 @@ namespace QueryPack.RestApi.Internal
                     if (predicate is null)
                         predicate = expression;
                     else
-                        predicate = Expression.And(predicate, expression);
+                        predicate = Expression.AndAlso(predicate, expression);
                 }
             }
 
@@ -110,7 +110,7 @@ namespace QueryPack.RestApi.Internal
             }
             while (memberExpression is not null);
 
-            return steps.ToList();
+            return [.. steps];
         }
 
         private static List<Expression> GetSetterExpressionTree(MemberExpression memberExpression)
@@ -130,7 +130,7 @@ namespace QueryPack.RestApi.Internal
             }
             while (memberExpression is not null);
 
-            return tree.ToList();
+            return [.. tree];
         }
     }
 }

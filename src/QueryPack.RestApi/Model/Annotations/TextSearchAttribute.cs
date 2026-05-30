@@ -8,7 +8,7 @@ namespace QueryPack.RestApi.Model.Annotations
     public class TextSearchAttribute : Attribute, IAnnotation
     {
         private static readonly MethodInfo _likeMethod = typeof(string).GetMethod(nameof(String.StartsWith),
-             new[] { typeof(string) });
+             [typeof(string)]);
 
         public void Apply(IAnnotationContext context)
         {

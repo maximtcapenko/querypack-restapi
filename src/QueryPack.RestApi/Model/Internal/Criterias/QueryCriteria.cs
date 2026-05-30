@@ -6,20 +6,14 @@ namespace QueryPack.RestApi.Model.Internal.Criterias
     using Meta.Impl;
     using RestApi.Internal;
 
-    internal class QueryCriteria<TModel> : ICriteria<TModel>
+    internal class QueryCriteria<TModel>(ModelMetadata modelMetadata, Dictionary<PropertyMetadata, IEnumerable<object>> predicateSelectors) : ICriteria<TModel>
         where TModel : class
     {
         private static readonly MethodInfo _containsMethod = ReflectionUtils.GetContainsMethod();
         private static readonly MethodInfo _selectMethod = ReflectionUtils.GetSelectMethod();
 
-        private readonly Dictionary<PropertyMetadata, IEnumerable<object>> _predicateSelectos;
-        private readonly ModelMetadata _modelMetadata;
-
-        public QueryCriteria(ModelMetadata modelMetadata, Dictionary<PropertyMetadata, IEnumerable<object>> predicateSelectors)
-        {
-            _predicateSelectos = predicateSelectors;
-            _modelMetadata = modelMetadata;
-        }
+        private readonly Dictionary<PropertyMetadata, IEnumerable<object>> _predicateSelectos = predicateSelectors;
+        private readonly ModelMetadata _modelMetadata = modelMetadata;
 
         public void Apply(IQuerySet<TModel> queryset)
         {
@@ -91,7 +85,7 @@ namespace QueryPack.RestApi.Model.Internal.Criterias
             if (start != end)
             {
                 var less = Expression.LessThanOrEqual(propertyExpression, Expression.Constant(end));
-                return Expression.And(less, greater);
+                return Expression.AndAlso(less, greater);
             }
             else
                 return greater;
@@ -168,7 +162,7 @@ namespace QueryPack.RestApi.Model.Internal.Criterias
             if (left is null)
                 left = right;
             else
-                left = Expression.And(left, right);
+                left = Expression.AndAlso(left, right);
 
             return left;
         }

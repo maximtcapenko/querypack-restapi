@@ -8,16 +8,11 @@ namespace QueryPack.RestApi.Mvc.Internal
     using System.Text.Json.Serialization;
     using RestApi.Model.Meta;
 
-    internal class ModelKeysOnlyJsonConverterFactory : JsonConverterFactory
+    internal class ModelKeysOnlyJsonConverterFactory(ModelMetadata modelMetadata) : JsonConverterFactory
     {
         private readonly static ConcurrentDictionary<Type, Func<ModelMetadata, JsonConverter>> _factoryCache = new();
 
-        private readonly ModelMetadata _modelMetadata;
-
-        public ModelKeysOnlyJsonConverterFactory(ModelMetadata modelMetadata)
-        {
-            _modelMetadata = modelMetadata;
-        }
+        private readonly ModelMetadata _modelMetadata = modelMetadata;
 
         public override bool CanConvert(Type typeToConvert)
             => typeToConvert == _modelMetadata.ModelType;
@@ -29,7 +24,7 @@ namespace QueryPack.RestApi.Mvc.Internal
                 var argType = typeof(ModelMetadata);
                 var convertorType = typeof(ModelKeysJsonConverter<>).MakeGenericType(type);
                 var parameter = Expression.Parameter(argType);
-                var ctor = convertorType.GetConstructor(BindingFlags.Public | BindingFlags.Instance, new[] { argType });
+                var ctor = convertorType.GetConstructor(BindingFlags.Public | BindingFlags.Instance, [argType]);
                 var @new = Expression.New(ctor, parameter);
                 return Expression.Lambda<Func<ModelMetadata, JsonConverter>>(@new, parameter).Compile();
             });

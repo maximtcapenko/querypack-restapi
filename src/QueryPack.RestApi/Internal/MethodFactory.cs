@@ -38,10 +38,10 @@ namespace QueryPack.RestApi.Internal
 
         private static Expression[] CreateParameterExpressions(MethodInfo method, Expression argumentsParameter)
         {
-            return method.GetParameters().Select((parameter, index) =>
+            return [.. method.GetParameters().Select((parameter, index) =>
                 Expression.Convert(
                     Expression.ArrayIndex(argumentsParameter, Expression.Constant(index)),
-                    parameter.ParameterType)).ToArray();
+                    parameter.ParameterType))];
         }
     }
 }

@@ -2,7 +2,7 @@ namespace QueryPack.RestApi.Model.Meta.Impl
 {
     internal class ModelMetadataProviderImpl : IModelMetadataProvider
     {
-        private readonly Dictionary<Type, ModelMetadata> _metaCache = new();
+        private readonly Dictionary<Type, ModelMetadata> _metaCache = [];
 
         public ModelMetadataProviderImpl(IEnumerable<Type> modelTypes)
         {

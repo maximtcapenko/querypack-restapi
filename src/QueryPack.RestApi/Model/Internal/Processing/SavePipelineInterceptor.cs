@@ -5,14 +5,9 @@ namespace QueryPack.RestApi.Model.Internal.Processing
     using Annotations;
     using Meta;
 
-    internal class SavePipelineInterceptor : ISaveChangesInterceptor
+    internal class SavePipelineInterceptor(IServiceProvider serviceProvider) : ISaveChangesInterceptor
     {
-        private readonly IServiceProvider _serviceProvider;
-
-        public SavePipelineInterceptor(IServiceProvider serviceProvider)
-        {
-            _serviceProvider = serviceProvider;
-        }
+        private readonly IServiceProvider _serviceProvider = serviceProvider;
 
         public async ValueTask<InterceptionResult<int>> SavingChangesAsync(DbContextEventData eventData, InterceptionResult<int> result, CancellationToken cancellationToken = default)
         {

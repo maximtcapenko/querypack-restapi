@@ -15,11 +15,8 @@ namespace QueryPack.RestApi.Model.Meta.Extensions
 
             if (propertyValue is not IEnumerable enumerable) return;
 
-            var enumertor = enumerable.GetEnumerator();
-
-            while (enumertor.MoveNext())
+            foreach (var navigationInstance in enumerable)
             {
-                var navigationInstance = enumertor.Current;
                 var navigationMeta = modelMetadataProvider.GetMetadata(navigationInstance.GetType());
 
                 var navigationLoader = QueryUtils.GetEntityLoader(navigationMeta.ModelType);

@@ -6,19 +6,16 @@ namespace QueryPack.RestApi.Exceptions.Internal
     using Exceptions;
     using Microsoft.AspNetCore.Diagnostics;
 
-    internal class ExceptionHandlingResultFactoryImpl : IExceptionHandlingResultFactory
+    internal class ExceptionHandlingResultFactoryImpl(IEnumerable<IExceptionHandlingResultBuilder> exceptionHandlerMessageBuilders) : IExceptionHandlingResultFactory
     {
-        private readonly IEnumerable<IExceptionHandlingResultBuilder> _exceptionHandlerMessageBuilders;
-
-        public ExceptionHandlingResultFactoryImpl(IEnumerable<IExceptionHandlingResultBuilder> exceptionHandlerMessageBuilders)
-        {
-            _exceptionHandlerMessageBuilders = exceptionHandlerMessageBuilders;
-        }
+        private readonly IEnumerable<IExceptionHandlingResultBuilder> _exceptionHandlerMessageBuilders = exceptionHandlerMessageBuilders;
 
         public Task<IExceptionHandlingResult> CreateAsync(HttpContext httpContext)
         {
             var feature = httpContext.Features.Get<IExceptionHandlerFeature>();
- 
+            if (feature is null)
+                return BuildDefault(new InvalidOperationException("No exception handler feature available on the current context."));
+
             var exceptionHandlerMessageBuilder = _exceptionHandlerMessageBuilders.FirstOrDefault(e => e.CanBuild(feature.Error.GetType()));
             if (exceptionHandlerMessageBuilder is null)
                 return BuildDefault(feature.Error);
