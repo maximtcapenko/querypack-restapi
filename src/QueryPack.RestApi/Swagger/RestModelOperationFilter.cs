@@ -1,6 +1,6 @@
 namespace QueryPack.RestApi.Swagger
 {
-    using Microsoft.OpenApi.Models;
+    using Microsoft.OpenApi;
     using Model.Meta;
     using Swashbuckle.AspNetCore.SwaggerGen;
 
@@ -27,14 +27,14 @@ namespace QueryPack.RestApi.Swagger
                     var keys = modelMetadata.GetKeys();
                     foreach (var key in keys)
                     {
+                        var schema = new OpenApiSchema();
+                        VisitParameterSchema(key.PropertyType, schema);
                         var parameter = new OpenApiParameter
                         {
                             Name = parameterDescriptor.Name,
                             In = target.In,
-                            Schema = new OpenApiSchema()
+                            Schema = schema
                         };
-
-                        VisitParameterSchema(key.PropertyType, parameter.Schema);
                         operation.Parameters.Add(parameter);
                     }
                 }
@@ -43,14 +43,14 @@ namespace QueryPack.RestApi.Swagger
                     var modelMetadata = _modelMetadataProvider.GetMetadata(criteriaParameter.ParameterType.GetGenericArguments()[0]);
                     foreach (var propertyMeta in modelMetadata.GetRegularProperties())
                     {
+                        var schema = new OpenApiSchema();
+                        VisitParameterSchema(propertyMeta.PropertyType, schema);
                         var parameter = new OpenApiParameter
                         {
                             Name = propertyMeta.PropertyName,
                             In = target.In,
-                            Schema = new OpenApiSchema()
+                            Schema = schema
                         };
-
-                        VisitParameterSchema(propertyMeta.PropertyType, parameter.Schema);
                         operation.Parameters.Add(parameter);
                     }
                 }
@@ -61,30 +61,30 @@ namespace QueryPack.RestApi.Swagger
         {
             if (type == typeof(Guid))
             {
-                parameterSchema.Type = "string";
+                parameterSchema.Type = JsonSchemaType.String;
                 parameterSchema.Format = "uuid";
             }
-            
+
             if (type == typeof(string))
-                parameterSchema.Type = "string";
+                parameterSchema.Type = JsonSchemaType.String;
 
             if (type == typeof(int) || type == typeof(long))
-                parameterSchema.Type = "integer";
+                parameterSchema.Type = JsonSchemaType.Integer;
 
             if (type == typeof(bool))
-                parameterSchema.Type = "boolean";
+                parameterSchema.Type = JsonSchemaType.Boolean;
 
             if (type == typeof(float) || type == typeof(double) || type == typeof(decimal))
-                parameterSchema.Type = "number";
+                parameterSchema.Type = JsonSchemaType.Number;
 
             if (type == typeof(DateTime) || type == typeof(DateTimeOffset))
             {
-                parameterSchema.Type = "string";
+                parameterSchema.Type = JsonSchemaType.String;
                 parameterSchema.Format = "date-time";
             }
 
-            if (nullable == true)
-                parameterSchema.Nullable = true;
+            if (nullable)
+                parameterSchema.Type = (parameterSchema.Type ?? JsonSchemaType.Null) | JsonSchemaType.Null;
 
             if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>))
                 VisitParameterSchema(type.GetGenericArguments().First(), parameterSchema, true);

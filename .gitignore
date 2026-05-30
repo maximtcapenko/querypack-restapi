@@ -309,3 +309,5 @@ iac/datadog/.terraform/plugins/registry.terraform.io
 
 apps/InternalIdp/src/InternalIdp/keys
 docs/audit-logs-schema/.vscode/settings.json
+.vscode/
+.vs/

@@ -13,9 +13,8 @@ namespace QueryPack.RestApi.Model.Meta.Extensions
             var propertyValue = propertyMetadata.ValueGetter.GetValue(rootInstance);
             if (propertyValue is null) return;
 
-            var enumerable = propertyValue as IEnumerable;
-            if (enumerable is null) return;
-            
+            if (propertyValue is not IEnumerable enumerable) return;
+
             var enumertor = enumerable.GetEnumerator();
 
             while (enumertor.MoveNext())
