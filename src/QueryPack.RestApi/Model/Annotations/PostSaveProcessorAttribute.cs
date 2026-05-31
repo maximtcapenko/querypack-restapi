@@ -1,10 +1,9 @@
-﻿namespace QueryPack.RestApi.Model.Annotations
+﻿namespace QueryPack.RestApi.Model.Annotations;
+
+using Meta;
+
+[AttributeUsage(AttributeTargets.Class)]
+public class PostSaveProcessorAttribute(Type processorType) : Attribute, IPipelineAnnotation
 {
-    using Meta;
-    
-    [AttributeUsage(AttributeTargets.Class)]
-    public class PostSaveProcessorAttribute(Type processorType) : Attribute, IPipelineAnnotation
-    {
-        public Type ProcessorType { get; } = processorType;
-    }
+    public Type ProcessorType { get; } = processorType;
 }

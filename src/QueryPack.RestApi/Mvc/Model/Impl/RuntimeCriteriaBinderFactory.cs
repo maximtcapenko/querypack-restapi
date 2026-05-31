@@ -1,43 +1,42 @@
-namespace QueryPack.RestApi.Mvc.Model.Impl
+namespace QueryPack.RestApi.Mvc.Model.Impl;
+
+using System.Linq.Expressions;
+using Intrnal;
+
+internal class RuntimeCriteriaBinderFactory<TModel> : ICriteriaBinderFactory<TModel>
+    where TModel : class
 {
-    using System.Linq.Expressions;
-    using Intrnal;
+    private readonly Type _binderType;
+    private readonly Func<ICriteriaBinder<TModel>> _factory;
 
-    internal class RuntimeCriteriaBinderFactory<TModel> : ICriteriaBinderFactory<TModel>
-        where TModel : class
+    public RuntimeCriteriaBinderFactory(Type binderType)
     {
-        private readonly Type _binderType;
-        private readonly Func<ICriteriaBinder<TModel>> _factory;
+        _binderType = binderType;
+        _factory = BuildFactoryInternal();
+    }
 
-        public RuntimeCriteriaBinderFactory(Type binderType)
+    public ICriteriaBinder<TModel> Create()
+        => _factory?.Invoke();
+
+    public bool CanCreate(Type type) => typeof(TModel) == type && _factory != null;
+
+    private Func<ICriteriaBinder<TModel>> BuildFactoryInternal()
+    {
+        Type binderType = null;
+
+        if (_binderType.IsGenericType)
+            binderType = _binderType.MakeGenericType(typeof(TModel));
+        else
         {
-            _binderType = binderType;
-            _factory = BuildFactoryInternal();
+            if (_binderType.GetInterfaces().Contains(typeof(ICriteriaBinder<TModel>)))
+                binderType = _binderType;
+        }
+        if (binderType != null)
+        {
+            var expression = Expression.Lambda<Func<ICriteriaBinder<TModel>>>(Expression.New(binderType));
+            return expression.Compile();
         }
 
-        public ICriteriaBinder<TModel> Create()
-            => _factory?.Invoke();
-
-        public bool CanCreate(Type type) => typeof(TModel) == type && _factory != null;
-
-        private Func<ICriteriaBinder<TModel>> BuildFactoryInternal()
-        {
-            Type binderType = null;
-
-            if (_binderType.IsGenericType)
-                binderType = _binderType.MakeGenericType(typeof(TModel));
-            else
-            {
-                if (_binderType.GetInterfaces().Contains(typeof(ICriteriaBinder<TModel>)))
-                    binderType = _binderType;
-            }
-            if (binderType != null)
-            {
-                var expression = Expression.Lambda<Func<ICriteriaBinder<TModel>>>(Expression.New(binderType));
-                return expression.Compile();
-            }
-
-            return null;
-        }
+        return null;
     }
 }

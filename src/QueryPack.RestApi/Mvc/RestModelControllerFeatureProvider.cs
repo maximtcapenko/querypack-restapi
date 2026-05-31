@@ -1,36 +1,35 @@
-namespace QueryPack.RestApi.Mvc
+namespace QueryPack.RestApi.Mvc;
+
+using System.Collections.Generic;
+using System.Reflection;
+using Microsoft.AspNetCore.Mvc.ApplicationParts;
+using Microsoft.AspNetCore.Mvc.Controllers;
+using RestApi.Model;
+
+internal class RestModelControllerFeatureProvider : IApplicationFeatureProvider<ControllerFeature>
 {
-    using System.Collections.Generic;
-    using System.Reflection;
-    using Microsoft.AspNetCore.Mvc.ApplicationParts;
-    using Microsoft.AspNetCore.Mvc.Controllers;
-    using RestApi.Model;
+    private readonly Assembly _modelsAssembly;
 
-    internal class RestModelControllerFeatureProvider : IApplicationFeatureProvider<ControllerFeature>
+    private readonly IEnumerable<Type> _controllerCandidates;
+
+    public RestModelControllerFeatureProvider(Assembly assembly, IEnumerable<Type> controllerCandidates)
     {
-        private readonly Assembly _modelsAssembly;
+        _controllerCandidates = controllerCandidates;
+         _modelsAssembly = assembly;
+    }
 
-        private readonly IEnumerable<Type> _controllerCandidates;
+    public void PopulateFeature(IEnumerable<ApplicationPart> parts, ControllerFeature feature)
+    {
+        var candidates = _modelsAssembly.GetExportedTypes()
+                                        .Where(x => x.GetCustomAttributes<RestApiAttribute>().Any())
+                                        .Concat(_controllerCandidates)
+                                        .Distinct();
 
-        public RestModelControllerFeatureProvider(Assembly assembly, IEnumerable<Type> controllerCandidates)
+        foreach (var candidate in candidates)
         {
-            _controllerCandidates = controllerCandidates;
-             _modelsAssembly = assembly;
-        }
-
-        public void PopulateFeature(IEnumerable<ApplicationPart> parts, ControllerFeature feature)
-        {
-            var candidates = _modelsAssembly.GetExportedTypes()
-                                            .Where(x => x.GetCustomAttributes<RestApiAttribute>().Any())
-                                            .Concat(_controllerCandidates)
-                                            .Distinct();
-
-            foreach (var candidate in candidates)
-            {
-                feature.Controllers.Add(
-                    typeof(RestModelController<>).MakeGenericType(candidate).GetTypeInfo()
-                );
-            }
+            feature.Controllers.Add(
+                typeof(RestModelController<>).MakeGenericType(candidate).GetTypeInfo()
+            );
         }
     }
 }

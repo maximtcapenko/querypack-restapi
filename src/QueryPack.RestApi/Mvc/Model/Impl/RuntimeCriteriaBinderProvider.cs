@@ -1,21 +1,20 @@
-namespace QueryPack.RestApi.Mvc.Model.Impl
+namespace QueryPack.RestApi.Mvc.Model.Impl;
+
+using System.Collections.Concurrent;
+using Intrnal;
+
+internal class RuntimeCriteriaBinderProvider(params Type[] binders) : ICriteriaBinderProvider
 {
-    using System.Collections.Concurrent;
-    using Intrnal;
+    private readonly IEnumerable<Type> _binders = binders;
+    private static ConcurrentDictionary<Type, IEnumerable<ICriteriaBinderFactory>> _binderFactoryCache = new();
 
-    internal class RuntimeCriteriaBinderProvider(params Type[] binders) : ICriteriaBinderProvider
+    public IEnumerable<ICriteriaBinder<TModel>> GetBinders<TModel>() where TModel : class
     {
-        private readonly IEnumerable<Type> _binders = binders;
-        private static ConcurrentDictionary<Type, IEnumerable<ICriteriaBinderFactory>> _binderFactoryCache = new();
+        var factories = _binderFactoryCache.GetOrAdd(typeof(TModel), (type) 
+            => _binders.Select(e => new RuntimeCriteriaBinderFactory<TModel>(e)));
 
-        public IEnumerable<ICriteriaBinder<TModel>> GetBinders<TModel>() where TModel : class
-        {
-            var factories = _binderFactoryCache.GetOrAdd(typeof(TModel), (type) 
-                => _binders.Select(e => new RuntimeCriteriaBinderFactory<TModel>(e)));
-
-            return factories.Where(e => e.CanCreate(typeof(TModel)))
-                            .OfType<ICriteriaBinderFactory<TModel>>()
-                            .Select(e => e.Create());
-        }
+        return factories.Where(e => e.CanCreate(typeof(TModel)))
+                        .OfType<ICriteriaBinderFactory<TModel>>()
+                        .Select(e => e.Create());
     }
 }

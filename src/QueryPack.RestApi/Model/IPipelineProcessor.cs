@@ -1,9 +1,8 @@
-﻿namespace QueryPack.RestApi.Model
-{
-    using Microsoft.EntityFrameworkCore.ChangeTracking;
+﻿namespace QueryPack.RestApi.Model;
 
-    public interface IPipelineProcessor
-    {
-        Task ProcessAsync(EntityEntry entry);
-    }
+using Microsoft.EntityFrameworkCore.ChangeTracking;
+
+public interface IPipelineProcessor
+{
+    Task ProcessAsync(EntityEntry entry);
 }

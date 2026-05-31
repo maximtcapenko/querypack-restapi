@@ -1,134 +1,133 @@
-namespace QueryPack.RestApi.Model.Meta
+namespace QueryPack.RestApi.Model.Meta;
+
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq.Expressions;
+using System.Reflection;
+using Impl;
+using RestApi.Internal;
+
+public sealed class PropertyMetadata
 {
-    using System.ComponentModel.DataAnnotations;
-    using System.ComponentModel.DataAnnotations.Schema;
-    using System.Linq.Expressions;
-    using System.Reflection;
-    using Impl;
-    using RestApi.Internal;
-
-    public sealed class PropertyMetadata
+    record class Accessors(IValueGetter ValueGetter)
     {
-        record class Accessors(IValueGetter ValueGetter)
+        public IValueSetter ValueSetter { get; set; }
+    };
+
+    private readonly PropertyInfo _propertyInfo;
+    private readonly IModelMetadataProvider _metadataProvider;
+    private readonly Lazy<bool> _isNavigation;
+
+    public ModelMetadata ModelMetadata { get; }
+    public Type PropertyType => _propertyInfo.PropertyType;
+    public string PropertyName => _propertyInfo.Name;
+    public Expression PropertyExpression { get; }
+    public bool IsKey { get; }
+    public bool IsPrimitive { get; }
+    public bool IsNumber { get; }
+    public bool IsDate { get; }
+    public bool IsNavigation => _isNavigation.Value;
+    public bool IsReadOnly => !_propertyInfo.CanWrite;
+    public bool IsIgnored { get; }
+    public bool IsCollection { get; }
+    public IValueGetter ValueGetter { get; }
+    public IValueSetter ValueSetter { get; }
+    public IEnumerable<IAnnotation> Annotations { get; }
+
+    public PropertyMetadata(PropertyInfo propertyInfo, ModelMetadata modelMetadata,
+        IModelMetadataProvider metadataProvider)
+    {
+        ModelMetadata = modelMetadata;
+        _propertyInfo = propertyInfo;
+        _metadataProvider = metadataProvider;
+        PropertyExpression = Expression.PropertyOrField(modelMetadata.InstanceExpression, propertyInfo.Name);
+        IsKey = ResolveIsKey(propertyInfo, modelMetadata);
+        IsPrimitive = ResolveIsPrimitive(propertyInfo);
+        IsIgnored = ResolveIsIgnored(propertyInfo);
+        IsDate = ResolveIsDate(propertyInfo);
+        IsCollection = _propertyInfo.PropertyType.IsAssignableTo(typeof(System.Collections.IEnumerable));
+        _isNavigation = new Lazy<bool>(() => ResolveNavigation(propertyInfo, metadataProvider));
+        var buildGetter = GetType().GetMethod(nameof(BuildAccessors), BindingFlags.Static | BindingFlags.NonPublic);
+        var accessors = (Accessors)buildGetter.MakeGenericMethod(modelMetadata.ModelType, PropertyType)
+            .Invoke(null, [propertyInfo, PropertyExpression, modelMetadata.InstanceExpression]);
+
+        ValueGetter = accessors.ValueGetter;
+        ValueSetter = accessors.ValueSetter;
+
+        Annotations = propertyInfo.GetCustomAttributes().OfType<IAnnotation>();
+    }
+
+    public IModelMetadataProvider GetModelMetadataProvider() => _metadataProvider;
+
+    private static bool ResolveNavigation(PropertyInfo property, IModelMetadataProvider metadataProvider)
+    {
+        if (ResolveIsPrimitive(property)) return false;
+
+        Type candidate;
+        if (property.PropertyType.IsGenericType)
         {
-            public IValueSetter ValueSetter { get; set; }
-        };
+            candidate = property.PropertyType.GetGenericArguments().First();
+        }
+        else
+            candidate = property.PropertyType;
 
-        private readonly PropertyInfo _propertyInfo;
-        private readonly IModelMetadataProvider _metadataProvider;
-        private readonly Lazy<bool> _isNavigation;
+        return metadataProvider.GetMetadata(candidate) is not null;
+    }
 
-        public ModelMetadata ModelMetadata { get; }
-        public Type PropertyType => _propertyInfo.PropertyType;
-        public string PropertyName => _propertyInfo.Name;
-        public Expression PropertyExpression { get; }
-        public bool IsKey { get; }
-        public bool IsPrimitive { get; }
-        public bool IsNumber { get; }
-        public bool IsDate { get; }
-        public bool IsNavigation => _isNavigation.Value;
-        public bool IsReadOnly => !_propertyInfo.CanWrite;
-        public bool IsIgnored { get; }
-        public bool IsCollection { get; }
-        public IValueGetter ValueGetter { get; }
-        public IValueSetter ValueSetter { get; }
-        public IEnumerable<IAnnotation> Annotations { get; }
+    private static bool ResolveIsPrimitive(PropertyInfo property)
+    {
+        static bool isPrimitive(Type type) => type.IsPrimitive
+            || type == typeof(string)
+            || type.IsEnum
+            || type.IsValueType;
 
-        public PropertyMetadata(PropertyInfo propertyInfo, ModelMetadata modelMetadata,
-            IModelMetadataProvider metadataProvider)
+        return isPrimitive(property.PropertyType)
+            || (property.PropertyType.IsGenericType && property.PropertyType.GetGenericTypeDefinition() == typeof(Nullable<>)
+            && isPrimitive(property.PropertyType.GetGenericArguments()[0]));
+    }
+
+    private static bool ResolveIsKey(PropertyInfo property, ModelMetadata modelMetadata)
+    {
+        if (property.GetCustomAttribute<KeyAttribute>() != null)
         {
-            ModelMetadata = modelMetadata;
-            _propertyInfo = propertyInfo;
-            _metadataProvider = metadataProvider;
-            PropertyExpression = Expression.PropertyOrField(modelMetadata.InstanceExpression, propertyInfo.Name);
-            IsKey = ResolveIsKey(propertyInfo, modelMetadata);
-            IsPrimitive = ResolveIsPrimitive(propertyInfo);
-            IsIgnored = ResolveIsIgnored(propertyInfo);
-            IsDate = ResolveIsDate(propertyInfo);
-            IsCollection = _propertyInfo.PropertyType.IsAssignableTo(typeof(System.Collections.IEnumerable));
-            _isNavigation = new Lazy<bool>(() => ResolveNavigation(propertyInfo, metadataProvider));
-            var buildGetter = GetType().GetMethod(nameof(BuildAccessors), BindingFlags.Static | BindingFlags.NonPublic);
-            var accessors = (Accessors)buildGetter.MakeGenericMethod(modelMetadata.ModelType, PropertyType)
-                .Invoke(null, [propertyInfo, PropertyExpression, modelMetadata.InstanceExpression]);
-
-            ValueGetter = accessors.ValueGetter;
-            ValueSetter = accessors.ValueSetter;
-
-            Annotations = propertyInfo.GetCustomAttributes().OfType<IAnnotation>();
+            return true;
+        }
+        if (property.Name.Equals($"{modelMetadata.ModelType.Name}Id",
+            StringComparison.OrdinalIgnoreCase) ||
+            property.Name.Equals("Id", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
         }
 
-        public IModelMetadataProvider GetModelMetadataProvider() => _metadataProvider;
+        return false;
+    }
 
-        private static bool ResolveNavigation(PropertyInfo property, IModelMetadataProvider metadataProvider)
+    private static bool ResolveIsIgnored(PropertyInfo property)
+        => property.GetCustomAttribute<NotMappedAttribute>() != null;
+
+    private static bool ResolveIsDate(PropertyInfo property)
+    {
+        static bool isDate(Type type) => type == typeof(DateTime)
+          || type == typeof(DateTimeOffset)
+          || type == typeof(TimeSpan);
+
+        return isDate(property.PropertyType)
+           || (property.PropertyType.IsGenericType && property.PropertyType.GetGenericTypeDefinition() == typeof(Nullable<>)
+           && isDate(property.PropertyType.GetGenericArguments()[0]));
+    }
+
+    private static Accessors BuildAccessors<TModel, TProperty>(PropertyInfo propertyInfo, Expression propertyExpression, Expression instanceExpression)
+        where TModel : class
+    {
+        var getter = ExpressionUtils.CreateGetter<TModel, TProperty>(propertyExpression, instanceExpression);
+        var accessors = new Accessors(new ValueGetterImpl<TModel, TProperty>(getter));
+
+        if (propertyInfo.CanWrite)
         {
-            if (ResolveIsPrimitive(property)) return false;
-
-            Type candidate;
-            if (property.PropertyType.IsGenericType)
-            {
-                candidate = property.PropertyType.GetGenericArguments().First();
-            }
-            else
-                candidate = property.PropertyType;
-
-            return metadataProvider.GetMetadata(candidate) is not null;
+            var setter = ExpressionUtils.CreateSetter<TModel, TProperty>(propertyExpression, instanceExpression);
+            accessors.ValueSetter = new ValueSetterImpl<TModel, TProperty>(setter);
         }
 
-        private static bool ResolveIsPrimitive(PropertyInfo property)
-        {
-            static bool isPrimitive(Type type) => type.IsPrimitive
-                || type == typeof(string)
-                || type.IsEnum
-                || type.IsValueType;
-
-            return isPrimitive(property.PropertyType)
-                || (property.PropertyType.IsGenericType && property.PropertyType.GetGenericTypeDefinition() == typeof(Nullable<>)
-                && isPrimitive(property.PropertyType.GetGenericArguments()[0]));
-        }
-
-        private static bool ResolveIsKey(PropertyInfo property, ModelMetadata modelMetadata)
-        {
-            if (property.GetCustomAttribute<KeyAttribute>() != null)
-            {
-                return true;
-            }
-            if (property.Name.Equals($"{modelMetadata.ModelType.Name}Id",
-                StringComparison.OrdinalIgnoreCase) ||
-                property.Name.Equals("Id", StringComparison.OrdinalIgnoreCase))
-            {
-                return true;
-            }
-
-            return false;
-        }
-
-        private static bool ResolveIsIgnored(PropertyInfo property)
-            => property.GetCustomAttribute<NotMappedAttribute>() != null;
-
-        private static bool ResolveIsDate(PropertyInfo property)
-        {
-            static bool isDate(Type type) => type == typeof(DateTime)
-              || type == typeof(DateTimeOffset)
-              || type == typeof(TimeSpan);
-
-            return isDate(property.PropertyType)
-               || (property.PropertyType.IsGenericType && property.PropertyType.GetGenericTypeDefinition() == typeof(Nullable<>)
-               && isDate(property.PropertyType.GetGenericArguments()[0]));
-        }
-
-        private static Accessors BuildAccessors<TModel, TProperty>(PropertyInfo propertyInfo, Expression propertyExpression, Expression instanceExpression)
-            where TModel : class
-        {
-            var getter = ExpressionUtils.CreateGetter<TModel, TProperty>(propertyExpression, instanceExpression);
-            var accessors = new Accessors(new ValueGetterImpl<TModel, TProperty>(getter));
-
-            if (propertyInfo.CanWrite)
-            {
-                var setter = ExpressionUtils.CreateSetter<TModel, TProperty>(propertyExpression, instanceExpression);
-                accessors.ValueSetter = new ValueSetterImpl<TModel, TProperty>(setter);
-            }
-
-            return accessors;
-        }
+        return accessors;
     }
 }

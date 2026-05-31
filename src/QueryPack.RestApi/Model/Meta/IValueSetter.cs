@@ -1,7 +1,6 @@
-namespace QueryPack.RestApi.Model.Meta
+namespace QueryPack.RestApi.Model.Meta;
+
+public interface IValueSetter
 {
-    public interface IValueSetter
-    {
-        void SetValue(object model, object value);
-    }
+    void SetValue(object model, object value);
 }

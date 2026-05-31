@@ -1,8 +1,7 @@
-namespace QueryPack.RestApi.Model
+namespace QueryPack.RestApi.Model;
+
+public interface ICriteria<TModel> 
+    where TModel : class
 {
-    public interface ICriteria<TModel> 
-        where TModel : class
-    {
-        void Apply(IQuerySet<TModel> queryset);
-    }
+    void Apply(IQuerySet<TModel> queryset);
 }

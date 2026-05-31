@@ -1,8 +1,7 @@
-namespace QueryPack.RestApi.Model
+namespace QueryPack.RestApi.Model;
+
+public interface IQuerySet<TModel>
+    where TModel : class
 {
-    public interface IQuerySet<TModel>
-        where TModel : class
-    {
-        IQueryable<TModel> Query { get; set; }
-    }
+    IQueryable<TModel> Query { get; set; }
 }

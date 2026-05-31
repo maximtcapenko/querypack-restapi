@@ -1,8 +1,7 @@
-namespace QueryPack.RestApi.Mvc.Model
+namespace QueryPack.RestApi.Mvc.Model;
+
+public interface ICriteriaBinderProvider
 {
-    public interface ICriteriaBinderProvider
-    {
-        IEnumerable<ICriteriaBinder<TModel>> GetBinders<TModel>()
-            where TModel : class;
-    }
+    IEnumerable<ICriteriaBinder<TModel>> GetBinders<TModel>()
+        where TModel : class;
 }

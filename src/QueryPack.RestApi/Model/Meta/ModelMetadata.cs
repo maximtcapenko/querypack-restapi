@@ -1,30 +1,29 @@
-namespace QueryPack.RestApi.Model.Meta
+namespace QueryPack.RestApi.Model.Meta;
+
+using System.Linq.Expressions;
+
+public sealed class ModelMetadata
 {
-    using System.Linq.Expressions;
+    public Type ModelType { get; }
 
-    public sealed class ModelMetadata
+    public IEnumerable<PropertyMetadata> PropertyMetadata { get; }
+
+    public Expression InstanceExpression { get; }
+
+    public Func<object> InstanceFactory { get; }
+
+    internal ModelMetadata(Type modelType, IModelMetadataProvider metadataProvider)
     {
-        public Type ModelType { get; }
+        ModelType = modelType;
+        var propertyMeta = new List<PropertyMetadata>();
 
-        public IEnumerable<PropertyMetadata> PropertyMetadata { get; }
+        PropertyMetadata = propertyMeta;
+        InstanceExpression = Expression.Parameter(modelType);
+        InstanceFactory = Expression.Lambda<Func<object>>(Expression.New(modelType)).Compile();
 
-        public Expression InstanceExpression { get; }
-
-        public Func<object> InstanceFactory { get; }
-
-        internal ModelMetadata(Type modelType, IModelMetadataProvider metadataProvider)
+        foreach (var property in modelType.GetProperties())
         {
-            ModelType = modelType;
-            var propertyMeta = new List<PropertyMetadata>();
-
-            PropertyMetadata = propertyMeta;
-            InstanceExpression = Expression.Parameter(modelType);
-            InstanceFactory = Expression.Lambda<Func<object>>(Expression.New(modelType)).Compile();
-
-            foreach (var property in modelType.GetProperties())
-            {
-                propertyMeta.Add(new PropertyMetadata(property, this, metadataProvider));
-            }
+            propertyMeta.Add(new PropertyMetadata(property, this, metadataProvider));
         }
     }
 }

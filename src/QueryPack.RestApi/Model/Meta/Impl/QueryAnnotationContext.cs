@@ -1,37 +1,36 @@
-namespace QueryPack.RestApi.Model.Meta.Impl
+namespace QueryPack.RestApi.Model.Meta.Impl;
+
+using System.Linq.Expressions;
+
+internal class QueryAnnotationContext : IAnnotationContext
 {
-    using System.Linq.Expressions;
+    private readonly List<Expression> _annotationExpressions = [];
 
-    internal class QueryAnnotationContext : IAnnotationContext
+    public ModelMetadata ModelMetadata { get; }
+    public IModelMetadataProvider ModelMetadataProvider { get; }
+    public MemberExpression PropertyExpression { get; set; }
+    public Type PropertyType { get; set; }
+    public object Input { get; }
+    
+    public static QueryAnnotationContext Create(PropertyMetadata propertyMetadata, object input)
+         => new(propertyMetadata.ModelMetadata, propertyMetadata.GetModelMetadataProvider(),
+         propertyMetadata.PropertyExpression as MemberExpression, propertyMetadata.PropertyType, input);
+
+    public QueryAnnotationContext(ModelMetadata modelMetadata, 
+    IModelMetadataProvider modelMetadataProvider,
+    MemberExpression propertyExpression,
+    Type propertyType,
+     object input)
     {
-        private readonly List<Expression> _annotationExpressions = [];
-
-        public ModelMetadata ModelMetadata { get; }
-        public IModelMetadataProvider ModelMetadataProvider { get; }
-        public MemberExpression PropertyExpression { get; set; }
-        public Type PropertyType { get; set; }
-        public object Input { get; }
-        
-        public static QueryAnnotationContext Create(PropertyMetadata propertyMetadata, object input)
-             => new(propertyMetadata.ModelMetadata, propertyMetadata.GetModelMetadataProvider(),
-             propertyMetadata.PropertyExpression as MemberExpression, propertyMetadata.PropertyType, input);
-
-        public QueryAnnotationContext(ModelMetadata modelMetadata, 
-        IModelMetadataProvider modelMetadataProvider,
-        MemberExpression propertyExpression,
-        Type propertyType,
-         object input)
-        {
-            ModelMetadata = modelMetadata;
-            ModelMetadataProvider = modelMetadataProvider;
-            PropertyExpression = propertyExpression;
-            PropertyType = propertyType;
-            Input = input;
-        }
-
-        public void SetResult(Expression annotationExpression)
-            => _annotationExpressions.Add(annotationExpression);
-        
-        public IEnumerable<Expression> GetAnnotationExpressions() => _annotationExpressions;
+        ModelMetadata = modelMetadata;
+        ModelMetadataProvider = modelMetadataProvider;
+        PropertyExpression = propertyExpression;
+        PropertyType = propertyType;
+        Input = input;
     }
+
+    public void SetResult(Expression annotationExpression)
+        => _annotationExpressions.Add(annotationExpression);
+    
+    public IEnumerable<Expression> GetAnnotationExpressions() => _annotationExpressions;
 }

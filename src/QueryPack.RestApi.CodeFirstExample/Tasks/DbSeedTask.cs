@@ -1,50 +1,43 @@
-namespace QueryPack.RestApi.CodeFirstExample.Tasks
+namespace QueryPack.RestApi.CodeFirstExample.Tasks;
+
+using Models;
+
+internal class DbSeedTask(IServiceProvider factory) : IHostedService
 {
-    using Microsoft.EntityFrameworkCore;
-    using Models;
+    private readonly IServiceProvider _factory = factory;
 
-    internal class DbSeedTask : IHostedService
+    public async Task StartAsync(CancellationToken cancellationToken)
     {
-        private readonly IServiceProvider _factory;
+        var random = new Random();
+        using var scope = _factory.CreateScope();
+        using var context = scope.ServiceProvider.GetRequiredService<ModelsContext>();
 
-        public DbSeedTask(IServiceProvider factory)
+        var entities = Enumerable.Range(0, 100).Select((index, e) => new Entity
         {
-            _factory = factory;
+            Id = Guid.NewGuid(),
+            Name = $"ent_{index}",
+            CreatedAt = DateTimeOffset.UtcNow,
+            Versions = GenerateVersions(random.Next(0, 9)).ToList()
+        });
+        foreach (var entity in entities)
+        {
+            context.Add(entity);
         }
 
-        public async Task StartAsync(CancellationToken cancellationToken)
-        {
-            var random = new Random();
-            using var scope = _factory.CreateScope();
-            using var context = scope.ServiceProvider.GetRequiredService<ModelsContext>();
-
-            var entities = Enumerable.Range(0, 100).Select((index, e) => new Entity
-            {
-                Id = Guid.NewGuid(),
-                Name = $"ent_{index}",
-                CreatedAt = DateTimeOffset.UtcNow,
-                Versions = GenerateVersions(random.Next(0, 9)).ToList()
-            });
-            foreach (var entity in entities)
-            {
-                context.Add(entity);
-            }
-
-            await context.SaveChangesAsync();
-        }
-
-        public Task StopAsync(CancellationToken cancellationToken)
-        {
-            return Task.CompletedTask;
-        }
-
-        IEnumerable<Version> GenerateVersions(int count) =>
-     Enumerable.Range(0, count).Select((index, e) => new Version
-     {
-         Id = Guid.NewGuid(),
-         Value = index,
-         Name = $"ver_{index}",
-         CreatedAt = DateTimeOffset.UtcNow,
-     });
+        await context.SaveChangesAsync(cancellationToken);
     }
+
+    public Task StopAsync(CancellationToken cancellationToken)
+    {
+        return Task.CompletedTask;
+    }
+
+    IEnumerable<Version> GenerateVersions(int count) =>
+ Enumerable.Range(0, count).Select((index, e) => new Version
+ {
+     Id = Guid.NewGuid(),
+     Value = index,
+     Name = $"ver_{index}",
+     CreatedAt = DateTimeOffset.UtcNow,
+ });
 }

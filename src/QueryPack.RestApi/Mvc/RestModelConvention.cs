@@ -1,36 +1,35 @@
-namespace QueryPack.RestApi.Mvc
+namespace QueryPack.RestApi.Mvc;
+
+using System.Reflection;
+using Configuration;
+using Humanizer;
+using Microsoft.AspNetCore.Mvc.ApplicationModels;
+using RestApi.Model;
+
+internal class RestModelConvention(RestModelOptions options) : IControllerModelConvention
 {
-    using System.Reflection;
-    using Configuration;
-    using Humanizer;
-    using Microsoft.AspNetCore.Mvc.ApplicationModels;
-    using RestApi.Model;
+    private readonly RestModelOptions _options = options;
 
-    internal class RestModelConvention(RestModelOptions options) : IControllerModelConvention
+    public void Apply(ControllerModel controller)
     {
-        private readonly RestModelOptions _options = options;
+        static string resolvePrefix(string globalPrefix) => string.IsNullOrEmpty(globalPrefix)? "/api" : globalPrefix;
 
-        public void Apply(ControllerModel controller)
+        if (controller.ControllerType.IsGenericType)
         {
-            static string resolvePrefix(string globalPrefix) => string.IsNullOrEmpty(globalPrefix)? "/api" : globalPrefix;
+            var genericType = controller.ControllerType.GenericTypeArguments[0];
+            var customNameAttribute = genericType.GetCustomAttribute<RestApiAttribute>();
+            var route = string.IsNullOrEmpty(customNameAttribute?.Route) == true 
+                ? $"{resolvePrefix(_options.GlobalApiPrefix)}/{genericType.Name.Pluralize().Kebaberize()}" : customNameAttribute?.Route;
 
-            if (controller.ControllerType.IsGenericType)
+            controller.ControllerName = genericType.Name;
+            
+            controller.Selectors.Add(new SelectorModel
             {
-                var genericType = controller.ControllerType.GenericTypeArguments[0];
-                var customNameAttribute = genericType.GetCustomAttribute<RestApiAttribute>();
-                var route = string.IsNullOrEmpty(customNameAttribute?.Route) == true 
-                    ? $"{resolvePrefix(_options.GlobalApiPrefix)}/{genericType.Name.Pluralize().Kebaberize()}" : customNameAttribute?.Route;
-
-                controller.ControllerName = genericType.Name;
-                
-                controller.Selectors.Add(new SelectorModel
+                AttributeRouteModel = new AttributeRouteModel
                 {
-                    AttributeRouteModel = new AttributeRouteModel
-                    {
-                        Template = route
-                    },
-                });
-            }
+                    Template = route
+                },
+            });
         }
     }
 }

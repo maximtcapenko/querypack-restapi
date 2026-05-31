@@ -1,45 +1,44 @@
-namespace QueryPack.RestApi.Model.Annotations
+namespace QueryPack.RestApi.Model.Annotations;
+
+using Meta;
+using System.Linq.Expressions;
+using System.Reflection;
+
+[AttributeUsage(AttributeTargets.Property)]
+public class TextSearchAttribute : Attribute, IAnnotation
 {
-    using Meta;
-    using System.Linq.Expressions;
-    using System.Reflection;
+    private static readonly MethodInfo _likeMethod = typeof(string).GetMethod(nameof(String.StartsWith),
+         [typeof(string)]);
 
-    [AttributeUsage(AttributeTargets.Property)]
-    public class TextSearchAttribute : Attribute, IAnnotation
+    public void Apply(IAnnotationContext context)
     {
-        private static readonly MethodInfo _likeMethod = typeof(string).GetMethod(nameof(String.StartsWith),
-             [typeof(string)]);
+        // check if property type is string
+        if (context.PropertyType != typeof(string))
+            return;
 
-        public void Apply(IAnnotationContext context)
+        if (context.Input is IEnumerable<object> inputs)
         {
-            // check if property type is string
-            if (context.PropertyType != typeof(string))
-                return;
-
-            if (context.Input is IEnumerable<object> inputs)
+            // build OR statement
+            Expression resultExpression = null;
+            foreach (var input in inputs)
             {
-                // build OR statement
-                Expression resultExpression = null;
-                foreach (var input in inputs)
-                {
-                    if (input is not string) continue;
+                if (input is not string) continue;
 
-                    if (resultExpression is null)
-                        resultExpression = Expression.Call(context.PropertyExpression, _likeMethod, Expression.Constant(input));
-                    else
-                        resultExpression = Expression.Or(resultExpression, Expression.Call(context.PropertyExpression, _likeMethod, Expression.Constant(input)));
-                }
-
-                if (resultExpression is not null)
-                    context.SetResult(resultExpression);
+                if (resultExpression is null)
+                    resultExpression = Expression.Call(context.PropertyExpression, _likeMethod, Expression.Constant(input));
+                else
+                    resultExpression = Expression.Or(resultExpression, Expression.Call(context.PropertyExpression, _likeMethod, Expression.Constant(input)));
             }
-            else
-            {
-                if (context.Input is not string) return;
 
-                var likeCallExpression = Expression.Call(context.PropertyExpression, _likeMethod, Expression.Constant(context.Input));
-                context.SetResult(likeCallExpression);
-            }
+            if (resultExpression is not null)
+                context.SetResult(resultExpression);
+        }
+        else
+        {
+            if (context.Input is not string) return;
+
+            var likeCallExpression = Expression.Call(context.PropertyExpression, _likeMethod, Expression.Constant(context.Input));
+            context.SetResult(likeCallExpression);
         }
     }
 }

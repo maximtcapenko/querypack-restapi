@@ -1,8 +1,7 @@
-namespace QueryPack.RestApi.Model
+namespace QueryPack.RestApi.Model;
+
+public enum OrderDirection
 {
-    public enum OrderDirection
-    {
-        Asc,
-        Desc
-    }
+    Asc,
+    Desc
 }

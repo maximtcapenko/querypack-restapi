@@ -1,51 +1,50 @@
-namespace QueryPack.RestApi.Model.Internal.Processing
+namespace QueryPack.RestApi.Model.Internal.Processing;
+
+using Microsoft.EntityFrameworkCore.ChangeTracking;
+using Microsoft.EntityFrameworkCore.Diagnostics;
+using Annotations;
+using Meta;
+
+internal class SavePipelineInterceptor(IServiceProvider serviceProvider) : ISaveChangesInterceptor
 {
-    using Microsoft.EntityFrameworkCore.ChangeTracking;
-    using Microsoft.EntityFrameworkCore.Diagnostics;
-    using Annotations;
-    using Meta;
+    private readonly IServiceProvider _serviceProvider = serviceProvider;
 
-    internal class SavePipelineInterceptor(IServiceProvider serviceProvider) : ISaveChangesInterceptor
+    public async ValueTask<InterceptionResult<int>> SavingChangesAsync(DbContextEventData eventData, InterceptionResult<int> result, CancellationToken cancellationToken = default)
     {
-        private readonly IServiceProvider _serviceProvider = serviceProvider;
+        eventData.Context.ChangeTracker.DetectChanges();
 
-        public async ValueTask<InterceptionResult<int>> SavingChangesAsync(DbContextEventData eventData, InterceptionResult<int> result, CancellationToken cancellationToken = default)
+        foreach (var entry in eventData.Context.ChangeTracker.Entries())
         {
-            eventData.Context.ChangeTracker.DetectChanges();
-
-            foreach (var entry in eventData.Context.ChangeTracker.Entries())
-            {
-                await ProcessEntryAsync<PreSaveProcessorAttribute>(_serviceProvider, entry);
-            }
-
-            return result;
+            await ProcessEntryAsync<PreSaveProcessorAttribute>(_serviceProvider, entry);
         }
 
-        public async ValueTask<int> SavedChangesAsync(SaveChangesCompletedEventData eventData, int result, CancellationToken cancellationToken = default(CancellationToken))
+        return result;
+    }
+
+    public async ValueTask<int> SavedChangesAsync(SaveChangesCompletedEventData eventData, int result, CancellationToken cancellationToken = default)
+    {
+        eventData.Context.ChangeTracker.DetectChanges();
+
+        foreach (var entry in eventData.Context.ChangeTracker.Entries())
         {
-            eventData.Context.ChangeTracker.DetectChanges();
-
-            foreach (var entry in eventData.Context.ChangeTracker.Entries())
-            {
-                await ProcessEntryAsync<PostSaveProcessorAttribute>(_serviceProvider, entry);
-            }
-
-            return result;
+            await ProcessEntryAsync<PostSaveProcessorAttribute>(_serviceProvider, entry);
         }
 
-        private static async Task ProcessEntryAsync<TAnnotation>(IServiceProvider serviceProvider, EntityEntry entry)
-            where TAnnotation : class, IPipelineAnnotation
-        {
-            var annotation = entry.Entity.GetType()
-                                  .GetCustomAttributes(typeof(TAnnotation), false)
-                                  .FirstOrDefault();
+        return result;
+    }
 
-            if (annotation is not null)
-            {
-                var processType = (annotation as TAnnotation)?.ProcessorType;
-                var processor = serviceProvider.GetRequiredService(processType) as IPipelineProcessor;
-                await processor.ProcessAsync(entry);
-            }
+    private static async Task ProcessEntryAsync<TAnnotation>(IServiceProvider serviceProvider, EntityEntry entry)
+        where TAnnotation : class, IPipelineAnnotation
+    {
+        var annotation = entry.Entity.GetType()
+                              .GetCustomAttributes(typeof(TAnnotation), false)
+                              .FirstOrDefault();
+
+        if (annotation is not null)
+        {
+            var processType = (annotation as TAnnotation)?.ProcessorType;
+            var processor = serviceProvider.GetRequiredService(processType) as IPipelineProcessor;
+            await processor.ProcessAsync(entry);
         }
     }
 }

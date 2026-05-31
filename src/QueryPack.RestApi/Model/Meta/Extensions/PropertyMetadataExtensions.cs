@@ -1,34 +1,33 @@
-namespace QueryPack.RestApi.Model.Meta.Extensions
+namespace QueryPack.RestApi.Model.Meta.Extensions;
+
+using System.Collections;
+using Microsoft.EntityFrameworkCore;
+using RestApi.Internal;
+
+internal static class PropertyMetadataExtensions
 {
-    using System.Collections;
-    using Microsoft.EntityFrameworkCore;
-    using RestApi.Internal;
-
-    internal static class PropertyMetadataExtensions
+    internal static async Task ProcessCollectionNavigationAsync(this PropertyMetadata propertyMetadata, DbContext dbContext, object rootInstance, IModelMetadataProvider modelMetadataProvider)
     {
-        internal static async Task ProcessCollectionNavigationAsync(this PropertyMetadata propertyMetadata, DbContext dbContext, object rootInstance, IModelMetadataProvider modelMetadataProvider)
+        var navigationValues = new List<object>();
+
+        var propertyValue = propertyMetadata.ValueGetter.GetValue(rootInstance);
+        if (propertyValue is null) return;
+
+        if (propertyValue is not IEnumerable enumerable) return;
+
+        foreach (var navigationInstance in enumerable)
         {
-            var navigationValues = new List<object>();
+            var navigationMeta = modelMetadataProvider.GetMetadata(navigationInstance.GetType());
 
-            var propertyValue = propertyMetadata.ValueGetter.GetValue(rootInstance);
-            if (propertyValue is null) return;
+            var navigationLoader = QueryUtils.GetEntityLoader(navigationMeta.ModelType);
+            var navigationDbValue = await navigationLoader(dbContext, navigationInstance, navigationMeta);
 
-            if (propertyValue is not IEnumerable enumerable) return;
-
-            foreach (var navigationInstance in enumerable)
-            {
-                var navigationMeta = modelMetadataProvider.GetMetadata(navigationInstance.GetType());
-
-                var navigationLoader = QueryUtils.GetEntityLoader(navigationMeta.ModelType);
-                var navigationDbValue = await navigationLoader(dbContext, navigationInstance, navigationMeta);
-
-                if (navigationDbValue is not null)
-                    navigationValues.Add(navigationDbValue);
-                else
-                    navigationValues.Add(navigationInstance);
-            }
-
-            propertyMetadata.ValueSetter.SetValue(rootInstance, navigationValues);
+            if (navigationDbValue is not null)
+                navigationValues.Add(navigationDbValue);
+            else
+                navigationValues.Add(navigationInstance);
         }
+
+        propertyMetadata.ValueSetter.SetValue(rootInstance, navigationValues);
     }
 }

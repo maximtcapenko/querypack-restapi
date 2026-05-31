@@ -1,12 +1,11 @@
-namespace QueryPack.RestApi.Swagger
-{
-    using Swashbuckle.AspNetCore.SwaggerGen;
+namespace QueryPack.RestApi.Swagger;
 
-    public static class SwaggerGenOptionsExtensions
+using Swashbuckle.AspNetCore.SwaggerGen;
+
+public static class SwaggerGenOptionsExtensions
+{
+    public static void EnableRestModelAnnotations(this SwaggerGenOptions options)
     {
-        public static void EnableRestModelAnnotations(this SwaggerGenOptions options)
-        {
-            options.OperationFilter<RestModelOperationFilter>();
-        }
+        options.OperationFilter<RestModelOperationFilter>();
     }
 }

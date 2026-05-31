@@ -1,7 +1,6 @@
-namespace QueryPack.RestApi.Model.Meta
+namespace QueryPack.RestApi.Model.Meta;
+
+public interface IPipelineAnnotation
 {
-    public interface IPipelineAnnotation
-    {
-        Type ProcessorType { get; }
-    }
+    Type ProcessorType { get; }
 }

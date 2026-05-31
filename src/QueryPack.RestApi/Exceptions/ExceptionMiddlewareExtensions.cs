@@ -1,15 +1,14 @@
-namespace QueryPack.RestApi.Exceptions
-{
-    using Middlewares;
+namespace QueryPack.RestApi.Exceptions;
 
-    public static class ExceptionMiddlewareExtensions
+using Middlewares;
+
+public static class ExceptionMiddlewareExtensions
+{
+    public static void UseGlobalExceptionHandler(this IApplicationBuilder app)
     {
-        public static void UseGlobalExceptionHandler(this IApplicationBuilder app)
+        app.UseExceptionHandler(builder =>
         {
-            app.UseExceptionHandler(builder =>
-            {
-                builder.Run(ExceptionHandlingMiddleware.HandleAsync);
-            });
-        }
+            builder.Run(ExceptionHandlingMiddleware.HandleAsync);
+        });
     }
 }

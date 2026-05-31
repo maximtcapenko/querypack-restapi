@@ -1,136 +1,135 @@
-namespace QueryPack.RestApi.Extensions
+namespace QueryPack.RestApi.Extensions;
+
+using System.Reflection;
+using Configuration;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Scaffolding;
+using Model;
+using Model.Meta;
+using Model.Meta.Impl;
+using Mvc;
+using Mvc.Model;
+using Mvc.Model.Binders;
+using Mvc.Model.Impl;
+using Internal;
+using Exceptions;
+using Exceptions.Internal;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+
+public static class ServiceCollectionExtensions
 {
-    using System.Reflection;
-    using Configuration;
-    using Microsoft.EntityFrameworkCore;
-    using Microsoft.EntityFrameworkCore.Scaffolding;
-    using Model;
-    using Model.Meta;
-    using Model.Meta.Impl;
-    using Mvc;
-    using Mvc.Model;
-    using Mvc.Model.Binders;
-    using Mvc.Model.Impl;
-    using Internal;
-    using Exceptions;
-    using Exceptions.Internal;
-    using Microsoft.Extensions.DependencyInjection.Extensions;
-
-    public static class ServiceCollectionExtensions
+    public static IServiceCollection AddRestModel<TContext>(this IServiceCollection self,
+         Action<RestModelOptions> options = default)
+        where TContext : DbContext
     {
-        public static IServiceCollection AddRestModel<TContext>(this IServiceCollection self,
-             Action<RestModelOptions> options = default)
-            where TContext : DbContext
+        var modelOptions = new RestModelOptions();
+        options?.Invoke(modelOptions);
+
+        var registeredTypes = self.AddReadWriteModel<TContext>(modelOptions);
+        var mvcBuilder = self.AddControllersWithViews(options =>
         {
-            var modelOptions = new RestModelOptions();
-            options?.Invoke(modelOptions);
-
-            var registeredTypes = self.AddReadWriteModel<TContext>(modelOptions);
-            var mvcBuilder = self.AddControllersWithViews(options =>
-            {
-                options.ModelBinderProviders.Insert(0, new ModelKeyBinderProvider());
-                options.Conventions.Add(new RestModelConvention(modelOptions));
-            }).AddJsonOptions(options =>
-            {
-                modelOptions.SerializerOptions?.Invoke(options.JsonSerializerOptions);
-            })
-              .ConfigureApplicationPartManager(m =>
-                    m.FeatureProviders.Add(new RestModelControllerFeatureProvider(typeof(TContext).Assembly, registeredTypes)));
-
-            modelOptions.MvcBuilderOptions?.Invoke(mvcBuilder);
-
-            var criterias = new Type[] { typeof(QueryCriteriaBinder<>), typeof(IncludeCriteriaBinder<>), typeof(OrderByCriteriaBinder<>), typeof(KeyCriteriaBinder<>) };
-
-            self.AddSingleton<ICriteriaBinderProvider>(
-                new RuntimeCriteriaBinderProvider([.. criterias, .. modelOptions.Criterias]));
-
-            self.AddSingleton<IExceptionHandlingResultFactory>(new ExceptionHandlingResultFactoryImpl(modelOptions.ExceptionMessageBuilders));
-
-            return self;
-        }
-
-        public static IServiceCollection AddRestModel(this IServiceCollection self,
-            IScaffoldService scaffolder, Action<RestModelOptions> options = default)
+            options.ModelBinderProviders.Insert(0, new ModelKeyBinderProvider());
+            options.Conventions.Add(new RestModelConvention(modelOptions));
+        }).AddJsonOptions(options =>
         {
-            var scaffoldedContextClassName = "ScaffoldedContext";
-            var rootNamesapce = "QueryPack.RestApi.Model.Models";
+            modelOptions.SerializerOptions?.Invoke(options.JsonSerializerOptions);
+        })
+          .ConfigureApplicationPartManager(m =>
+                m.FeatureProviders.Add(new RestModelControllerFeatureProvider(typeof(TContext).Assembly, registeredTypes)));
 
-            var modelCodeGenerationOptions = new ModelCodeGenerationOptions
-            {
-                RootNamespace = rootNamesapce,
-                ContextName = scaffoldedContextClassName,
-                ContextNamespace = rootNamesapce,
-                ModelNamespace = rootNamesapce,
-                UseDataAnnotations = true,
-                SuppressConnectionStringWarning = true,
-            };
+        modelOptions.MvcBuilderOptions?.Invoke(mvcBuilder);
 
-            var scaffoldedModel = scaffolder.ScaffoldModel(modelCodeGenerationOptions);
-            var referencedAssemblies = scaffolder.GetType().Assembly.GetReferencedAssemblies()
-                           .Select(a => Assembly.Load(a));
+        var criterias = new Type[] { typeof(QueryCriteriaBinder<>), typeof(IncludeCriteriaBinder<>), typeof(OrderByCriteriaBinder<>), typeof(KeyCriteriaBinder<>) };
 
-            var dynamicContextAssembly = CSharpCompilationUtils.Compile(scaffoldedModel.AdditionalFiles.Select(e => e.Code).Concat([scaffoldedModel.ContextFile.Code]),
-                 [.. referencedAssemblies]);
+        self.AddSingleton<ICriteriaBinderProvider>(
+            new RuntimeCriteriaBinderProvider([.. criterias, .. modelOptions.Criterias]));
 
-            var dynamicContext = GetContext(dynamicContextAssembly, rootNamesapce, scaffoldedContextClassName);
+        self.AddSingleton<IExceptionHandlingResultFactory>(new ExceptionHandlingResultFactoryImpl(modelOptions.ExceptionMessageBuilders));
 
-            var addRestModel = typeof(ServiceCollectionExtensions).GetMethods().FirstOrDefault(e => e.Name == nameof(AddRestModel)
-            && e.IsGenericMethod);
+        return self;
+    }
 
-            var addRestModelGeneric = addRestModel.MakeGenericMethod(dynamicContext.GetType());
-            addRestModelGeneric.Invoke(null, [self, options]);
+    public static IServiceCollection AddRestModel(this IServiceCollection self,
+        IScaffoldService scaffolder, Action<RestModelOptions> options = default)
+    {
+        var scaffoldedContextClassName = "ScaffoldedContext";
+        var rootNamesapce = "QueryPack.RestApi.Model.Models";
 
-            return self;
-        }
-
-        internal static IEnumerable<Type> AddReadWriteModel<TContext>(this IServiceCollection self, RestModelOptions restModelOptions)
-            where TContext : DbContext
+        var modelCodeGenerationOptions = new ModelCodeGenerationOptions
         {
-            self.AddDbContext<TContext>((serviceProvider, options) => restModelOptions.ContextOptionsBuilder?.Invoke(serviceProvider, options));
-            self.AddScoped<DbContext>(s =>
-            {
-                var ctx = s.GetRequiredService<TContext>();
-                return ctx;
-            });
+            RootNamespace = rootNamesapce,
+            ContextName = scaffoldedContextClassName,
+            ContextNamespace = rootNamesapce,
+            ModelNamespace = rootNamesapce,
+            UseDataAnnotations = true,
+            SuppressConnectionStringWarning = true,
+        };
 
-            var modelTypes = new List<Type>();
+        var scaffoldedModel = scaffolder.ScaffoldModel(modelCodeGenerationOptions);
+        var referencedAssemblies = scaffolder.GetType().Assembly.GetReferencedAssemblies()
+                       .Select(a => Assembly.Load(a));
 
-            foreach (var property in typeof(TContext).GetProperties())
+        var dynamicContextAssembly = CSharpCompilationUtils.Compile(scaffoldedModel.AdditionalFiles.Select(e => e.Code).Concat([scaffoldedModel.ContextFile.Code]),
+             [.. referencedAssemblies]);
+
+        var dynamicContext = GetContext(dynamicContextAssembly, rootNamesapce, scaffoldedContextClassName);
+
+        var addRestModel = typeof(ServiceCollectionExtensions).GetMethods().FirstOrDefault(e => e.Name == nameof(AddRestModel)
+        && e.IsGenericMethod);
+
+        var addRestModelGeneric = addRestModel.MakeGenericMethod(dynamicContext.GetType());
+        addRestModelGeneric.Invoke(null, [self, options]);
+
+        return self;
+    }
+
+    internal static IEnumerable<Type> AddReadWriteModel<TContext>(this IServiceCollection self, RestModelOptions restModelOptions)
+        where TContext : DbContext
+    {
+        self.AddDbContext<TContext>((serviceProvider, options) => restModelOptions.ContextOptionsBuilder?.Invoke(serviceProvider, options));
+        self.AddScoped<DbContext>(s =>
+        {
+            var ctx = s.GetRequiredService<TContext>();
+            return ctx;
+        });
+
+        var modelTypes = new List<Type>();
+
+        foreach (var property in typeof(TContext).GetProperties())
+        {
+            if (property.PropertyType.IsGenericType && property.PropertyType.GetGenericTypeDefinition() == typeof(DbSet<>))
             {
-                if (property.PropertyType.IsGenericType && property.PropertyType.GetGenericTypeDefinition() == typeof(DbSet<>))
-                {
-                    var types = property.PropertyType.GetGenericArguments();
-                    modelTypes.AddRange(types);
-                    RegisterPipelineProcessors(self, types);
-                }
+                var types = property.PropertyType.GetGenericArguments();
+                modelTypes.AddRange(types);
+                RegisterPipelineProcessors(self, types);
             }
-
-            self.AddSingleton<IModelMetadataProvider>(new ModelMetadataProviderImpl(modelTypes));
-
-            return modelTypes;
         }
 
-        internal static DbContext GetContext(Assembly assembly, string rootNamesapce, string contextClassName)
+        self.AddSingleton<IModelMetadataProvider>(new ModelMetadataProviderImpl(modelTypes));
+
+        return modelTypes;
+    }
+
+    internal static DbContext GetContext(Assembly assembly, string rootNamesapce, string contextClassName)
+    {
+        var type = assembly.GetType($"{rootNamesapce}.{contextClassName}");
+        _ = type ?? throw new Exception("DataContext type not found");
+
+        var constr = type.GetConstructor(Type.EmptyTypes);
+        _ = constr ?? throw new Exception("DataContext ctor not found");
+
+        return (DbContext)constr.Invoke(null);
+    }
+
+    internal static void RegisterPipelineProcessors(IServiceCollection services, IEnumerable<Type> modelTypes)
+    {
+
+        var processors = modelTypes.SelectMany(e => e.GetCustomAttributes()
+                                                      .Select(e => e as IPipelineAnnotation)
+                                                      .Where(e => e is not null));
+        foreach(var processor in processors)
         {
-            var type = assembly.GetType($"{rootNamesapce}.{contextClassName}");
-            _ = type ?? throw new Exception("DataContext type not found");
-
-            var constr = type.GetConstructor(Type.EmptyTypes);
-            _ = constr ?? throw new Exception("DataContext ctor not found");
-
-            return (DbContext)constr.Invoke(null);
-        }
-
-        internal static void RegisterPipelineProcessors(IServiceCollection services, IEnumerable<Type> modelTypes)
-        {
-
-            var processors = modelTypes.SelectMany(e => e.GetCustomAttributes()
-                                                          .Select(e => e as IPipelineAnnotation)
-                                                          .Where(e => e is not null));
-            foreach(var processor in processors)
-            {
-                services.TryAddSingleton(processor.ProcessorType);
-            }
+            services.TryAddSingleton(processor.ProcessorType);
         }
     }
 }

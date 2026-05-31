@@ -1,7 +1,6 @@
-namespace QueryPack.RestApi.Model.Meta
+namespace QueryPack.RestApi.Model.Meta;
+
+public interface IAnnotation
 {
-    public interface IAnnotation
-    {
-        void Apply(IAnnotationContext context);
-    }
+    void Apply(IAnnotationContext context);
 }

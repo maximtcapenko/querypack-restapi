@@ -1,9 +1,6 @@
-using Microsoft.AspNetCore.Diagnostics;
+namespace QueryPack.RestApi.Exceptions;
 
-namespace QueryPack.RestApi.Exceptions
+public interface IExceptionHandlingResultFactory
 {
-    public interface IExceptionHandlingResultFactory
-    {
-        Task<IExceptionHandlingResult> CreateAsync(HttpContext httpContext);
-    }
+    Task<IExceptionHandlingResult> CreateAsync(HttpContext httpContext);
 }

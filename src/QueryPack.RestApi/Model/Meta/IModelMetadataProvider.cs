@@ -1,7 +1,6 @@
-namespace QueryPack.RestApi.Model.Meta
+namespace QueryPack.RestApi.Model.Meta;
+
+public interface IModelMetadataProvider
 {
-    public interface IModelMetadataProvider
-    {
-        ModelMetadata GetMetadata(Type modelType);
-    }
+    ModelMetadata GetMetadata(Type modelType);
 }

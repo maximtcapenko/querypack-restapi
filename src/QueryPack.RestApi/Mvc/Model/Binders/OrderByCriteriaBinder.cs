@@ -1,66 +1,65 @@
-namespace QueryPack.RestApi.Mvc.Model.Binders
+namespace QueryPack.RestApi.Mvc.Model.Binders;
+
+using Microsoft.AspNetCore.Mvc.ModelBinding;
+using RestApi.Model;
+using RestApi.Model.Internal.Criterias;
+using RestApi.Model.Meta;
+
+internal class OrderByCriteriaBinder<TModel> : ICriteriaBinder<TModel>
+      where TModel : class
 {
-    using Microsoft.AspNetCore.Mvc.ModelBinding;
-    using RestApi.Model;
-    using RestApi.Model.Internal.Criterias;
-    using RestApi.Model.Meta;
+    private const string OrderByParameterName = "OrderBy";
 
-    internal class OrderByCriteriaBinder<TModel> : ICriteriaBinder<TModel>
-          where TModel : class
+    public void BindModel(ICriteriaBindingContext<TModel> bindingContext)
     {
-        private const string OrderByParameterName = "OrderBy";
+        var properties = bindingContext.ModelMetadata.GetRegularProperties();
+        var parameters = new Dictionary<PropertyMetadata, ValueProviderResult>();
 
-        public void BindModel(ICriteriaBindingContext<TModel> bindingContext)
+        foreach (var property in properties)
         {
-            var properties = bindingContext.ModelMetadata.GetRegularProperties();
-            var parameters = new Dictionary<PropertyMetadata, ValueProviderResult>();
-
-            foreach (var property in properties)
-            {
-                var orderbyResult = Resolve(bindingContext.ValueProvider, OrderByParameterName, property.PropertyName);
-                if (orderbyResult != ValueProviderResult.None)
-                    parameters[property] = orderbyResult;
-            }
-
-            var keys = new Dictionary<PropertyMetadata, OrderDirection>();
-
-            foreach (var parameter in parameters)
-            {
-                bindingContext.SetModelValue(parameter.Key.PropertyName, parameter.Value);
-
-                if (string.IsNullOrEmpty(parameter.Value.FirstValue))
-                {
-                    bindingContext.TryAddModelError(parameter.Key.PropertyName, parameter.Value);
-                    return;
-                }
-                else
-                {
-                    if (typeof(OrderDirection).TryConvertEnum(parameter.Value.FirstValue, out var parameterValue))
-                        keys[parameter.Key] = (OrderDirection)parameterValue;
-                }
-
-                if (!keys.ContainsKey(parameter.Key))
-                {
-                    bindingContext.TryAddModelError(parameter.Key.PropertyName, parameter.Value);
-                    return;
-                }
-            }
-
-            bindingContext.SetBindingResult(new OrderByCriteria<TModel>(bindingContext.ModelMetadata, keys));
+            var orderbyResult = Resolve(bindingContext.ValueProvider, OrderByParameterName, property.PropertyName);
+            if (orderbyResult != ValueProviderResult.None)
+                parameters[property] = orderbyResult;
         }
 
-        private static ValueProviderResult Resolve(IValueProvider valueProvider, string queryParameter, string name)
-        {
-            var patterns = new[] { "{0}[{1}]", "{0}.{1}" };
+        var keys = new Dictionary<PropertyMetadata, OrderDirection>();
 
-            foreach (var pattern in patterns)
+        foreach (var parameter in parameters)
+        {
+            bindingContext.SetModelValue(parameter.Key.PropertyName, parameter.Value);
+
+            if (string.IsNullOrEmpty(parameter.Value.FirstValue))
             {
-                var result = WebModelExtensions.GetValue(valueProvider, pattern, queryParameter, name);
-                if (result != ValueProviderResult.None)
-                    return result;
+                bindingContext.TryAddModelError(parameter.Key.PropertyName, parameter.Value);
+                return;
+            }
+            else
+            {
+                if (typeof(OrderDirection).TryConvertEnum(parameter.Value.FirstValue, out var parameterValue))
+                    keys[parameter.Key] = (OrderDirection)parameterValue;
             }
 
-            return ValueProviderResult.None;
+            if (!keys.ContainsKey(parameter.Key))
+            {
+                bindingContext.TryAddModelError(parameter.Key.PropertyName, parameter.Value);
+                return;
+            }
         }
+
+        bindingContext.SetBindingResult(new OrderByCriteria<TModel>(bindingContext.ModelMetadata, keys));
+    }
+
+    private static ValueProviderResult Resolve(IValueProvider valueProvider, string queryParameter, string name)
+    {
+        var patterns = new[] { "{0}[{1}]", "{0}.{1}" };
+
+        foreach (var pattern in patterns)
+        {
+            var result = WebModelExtensions.GetValue(valueProvider, pattern, queryParameter, name);
+            if (result != ValueProviderResult.None)
+                return result;
+        }
+
+        return ValueProviderResult.None;
     }
 }

@@ -1,22 +1,21 @@
-namespace QueryPack.RestApi.Model.Internal.Criterias
+namespace QueryPack.RestApi.Model.Internal.Criterias;
+
+internal class RootCriteria<TModel> : ICriteria<TModel>
+    where TModel : class
 {
-    internal class RootCriteria<TModel> : ICriteria<TModel>
-        where TModel : class
+    private readonly IEnumerable<ICriteria<TModel>> _internalCriterias;
+
+    public RootCriteria(params ICriteria<TModel>[] criterias)
     {
-        private readonly IEnumerable<ICriteria<TModel>> _internalCriterias;
+        if (criterias is null || criterias.Length == 0)
+            _internalCriterias = [];
+        else
+            _internalCriterias = criterias;
+    }
 
-        public RootCriteria(params ICriteria<TModel>[] criterias)
-        {
-            if (criterias is null || criterias.Length == 0)
-                _internalCriterias = [];
-            else
-                _internalCriterias = criterias;
-        }
-
-        public void Apply(IQuerySet<TModel> queryset)
-        {
-            foreach (var criteria in _internalCriterias)
-                criteria.Apply(queryset);
-        }
+    public void Apply(IQuerySet<TModel> queryset)
+    {
+        foreach (var criteria in _internalCriterias)
+            criteria.Apply(queryset);
     }
 }

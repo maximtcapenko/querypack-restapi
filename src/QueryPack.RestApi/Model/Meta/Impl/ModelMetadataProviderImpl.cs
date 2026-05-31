@@ -1,21 +1,20 @@
-namespace QueryPack.RestApi.Model.Meta.Impl
+namespace QueryPack.RestApi.Model.Meta.Impl;
+
+internal class ModelMetadataProviderImpl : IModelMetadataProvider
 {
-    internal class ModelMetadataProviderImpl : IModelMetadataProvider
+    private readonly Dictionary<Type, ModelMetadata> _metaCache = [];
+
+    public ModelMetadataProviderImpl(IEnumerable<Type> modelTypes)
     {
-        private readonly Dictionary<Type, ModelMetadata> _metaCache = [];
+        foreach(var modelType in modelTypes)
+            _metaCache[modelType] = new  ModelMetadata(modelType, this);
+    }
 
-        public ModelMetadataProviderImpl(IEnumerable<Type> modelTypes)
-        {
-            foreach(var modelType in modelTypes)
-                _metaCache[modelType] = new  ModelMetadata(modelType, this);
-        }
-
-        public ModelMetadata GetMetadata(Type modelType)
-        {
-            if(_metaCache.TryGetValue(modelType, out var meta))
-                return meta;
-            
-            return null;
-        }
+    public ModelMetadata GetMetadata(Type modelType)
+    {
+        if(_metaCache.TryGetValue(modelType, out var meta))
+            return meta;
+        
+        return null;
     }
 }

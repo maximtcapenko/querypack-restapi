@@ -1,7 +1,6 @@
-namespace QueryPack.RestApi.CodeFirstExample.Models
+namespace QueryPack.RestApi.CodeFirstExample.Models;
+
+public class Dependency
 {
-    public class Dependency
-    {
-        public Guid Id { get; set; }
-    }
+    public Guid Id { get; set; }
 }

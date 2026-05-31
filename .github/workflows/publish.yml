@@ -2,7 +2,7 @@ name: publish to nuget
 on:
   push:
     tags:
-      - '*'       
+      - '*'
 env:
   NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
   NUGET_SOURCE: ${{ secrets.NUGET_SOURCE }}
@@ -13,28 +13,24 @@ jobs:
     timeout-minutes: 5
 
     steps:
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v3
+      - uses: actions/checkout@v4
         with:
-          dotnet-version: 6.0.x
-
-      - uses: actions/checkout@v3
-        with:
+          fetch-depth: 0
           submodules: recursive
 
-      - name: Install GitVersion
-        uses: gittools/actions/gitversion/setup@v0.9.15
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
         with:
-          versionSpec: 5.9.0
+          dotnet-version: 10.0.x
 
-      - name: Fetch all history for all tags and branches
-        shell: bash
-        run: |
-          git fetch --prune --unshallow
+      - name: Install GitVersion
+        uses: gittools/actions/gitversion/setup@v3
+        with:
+          versionSpec: 6.x
 
       - name: Use GitVersion
         id: gitversion
-        uses: gittools/actions/gitversion/execute@v0.9.15
+        uses: gittools/actions/gitversion/execute@v3
 
       - name: Install Dependencies
         shell: bash
