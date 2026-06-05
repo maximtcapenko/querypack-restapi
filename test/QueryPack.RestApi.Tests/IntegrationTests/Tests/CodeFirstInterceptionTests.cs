@@ -8,14 +8,9 @@ using Xunit;
 
 namespace QueryPack.RestApi.Tests.IntegrationTests.Tests;
 
-public class CodeFirstInterceptionTests : IClassFixture<WebApplicationFactory<Program>>
+public class CodeFirstInterceptionTests(WebApplicationFactory<Program> applicationFactory) : IClassFixture<WebApplicationFactory<Program>>
 {
-    private readonly WebApplicationFactory<Program> _applicationFactory;
-
-    public CodeFirstInterceptionTests(WebApplicationFactory<Program> applicationFactory)
-    {
-        _applicationFactory = applicationFactory.AsCodeFirstModelContextWebApp<InterceptionContext>();
-    }
+    private readonly WebApplicationFactory<Program> _applicationFactory = applicationFactory.AsCodeFirstModelContextWebApp<InterceptionContext>();
 
     [Theory, AutoData]
     public async Task When_create_new_record_with_post_save_processing_processor_should_be_invoked(PostPipelineModel instance)

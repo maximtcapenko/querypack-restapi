@@ -18,54 +18,54 @@ internal class RestModelController<TModel>(DbContext dbContext,
 
     [HttpPost, Route("")]
     [KeysResultFilter]
-    public async Task<TModel> CreateAsync(TModel model)
+    public async Task<TModel> CreateAsync(TModel model, CancellationToken cancellationToken)
     {
         await ProcessNavigationsAsync(model);
-        await _dbContext.AddAsync(model);
-        await _dbContext.SaveChangesAsync();
+        await _dbContext.AddAsync(model, cancellationToken);
+        await _dbContext.SaveChangesAsync(cancellationToken);
 
         return model;
     }
 
     [HttpPut, Route("{key}")]
-    public async Task<ActionResult<TModel>> UpdateAsync([FromRoute] ICriteria<TModel> key, TModel model)
+    public async Task<ActionResult<TModel>> UpdateAsync([FromRoute] ICriteria<TModel> key, TModel model, CancellationToken cancellationToken)
     {
         var queryset = new ReadOnlyQuerySet(_dbContext.Set<TModel>());
         key.Apply(queryset);
 
-        var result = await queryset.Query.FirstOrDefaultAsync();
+        var result = await queryset.Query.FirstOrDefaultAsync(cancellationToken);
         if (result is null)
             return NotFound();
 
         await ProcessNavigationsAsync(model);
         MapProperties(model, result);
-        await _dbContext.SaveChangesAsync();
+        await _dbContext.SaveChangesAsync(cancellationToken);
 
         return result;
     }
 
     [HttpDelete, Route("{key}")]
-    public async Task<IActionResult> DeleteAsync([FromRoute] ICriteria<TModel> key)
+    public async Task<IActionResult> DeleteAsync([FromRoute] ICriteria<TModel> key, CancellationToken cancellationToken)
     {
         var queryset = new ReadOnlyQuerySet(_dbContext.Set<TModel>());
         key.Apply(queryset);
 
-        var result = await queryset.Query.FirstOrDefaultAsync();
+        var result = await queryset.Query.FirstOrDefaultAsync(cancellationToken);
         if (result is null)
             return NotFound();
 
         _dbContext.Remove(result);
-        await _dbContext.SaveChangesAsync();
+        await _dbContext.SaveChangesAsync(cancellationToken);
         return Ok();
     }
 
     [HttpGet, Route("{key}")]
-    public async Task<ActionResult<TModel>> GetByKeyAsync([FromRoute] ICriteria<TModel> key)
+    public async Task<ActionResult<TModel>> GetByKeyAsync([FromRoute] ICriteria<TModel> key, CancellationToken cancellationToken)
     {
         var queryset = new ReadOnlyQuerySet(_dbContext.Set<TModel>());
         key.Apply(queryset);
 
-        var result = await queryset.Query.FirstOrDefaultAsync();
+        var result = await queryset.Query.FirstOrDefaultAsync(cancellationToken: cancellationToken);
 
         if (result is null)
             return NotFound();
@@ -74,30 +74,30 @@ internal class RestModelController<TModel>(DbContext dbContext,
     }
 
     [HttpGet, Route("single")]
-    public async Task<ActionResult<TModel>> GetAsync([FromQuery] ICriteria<TModel> criteria)
+    public async Task<ActionResult<TModel>> GetAsync([FromQuery] ICriteria<TModel> criteria, CancellationToken cancellationToken)
     {
         var queryset = new ReadOnlyQuerySet(_dbContext.Set<TModel>());
         criteria.Apply(queryset);
 
-        var result = await queryset.Query.FirstOrDefaultAsync();
+        var result = await queryset.Query.FirstOrDefaultAsync(cancellationToken: cancellationToken);
         if (result is null) return NotFound();
 
         return result;
     }
 
     [HttpGet, Route("")]
-    public async Task<IEnumerable<TModel>> GetCollectionAsync([FromQuery] ICriteria<TModel> criteria)
+    public async Task<IEnumerable<TModel>> GetCollectionAsync([FromQuery] ICriteria<TModel> criteria, CancellationToken cancellationToken)
     {
         var queryset = new ReadOnlyQuerySet(_dbContext.Set<TModel>());
         criteria.Apply(queryset);
 
-        var result = await queryset.Query.ToListAsync();
+        var result = await queryset.Query.ToListAsync(cancellationToken: cancellationToken);
 
         return result;
     }
 
     [HttpGet, Route("range")]
-    public async Task<Range<TModel>> GetRangeAsync([FromQuery] ICriteria<TModel> criteria, [FromQuery] RangeQuery range)
+    public async Task<Range<TModel>> GetRangeAsync([FromQuery] ICriteria<TModel> criteria, [FromQuery] RangeQuery range, CancellationToken cancellationToken)
     {
         var queryset = new ReadOnlyQuerySet(_dbContext.Set<TModel>());
         criteria.Apply(queryset);
@@ -109,8 +109,8 @@ internal class RestModelController<TModel>(DbContext dbContext,
             ? queryset.Query.Skip(range.First).Take(range.Last - range.First + 1)
             : queryset.Query;
 
-        var results = await rangeQuery.ToListAsync();
-        var count = await queryset.Query.CountAsync();
+        var results = await rangeQuery.ToListAsync(cancellationToken: cancellationToken);
+        var count = await queryset.Query.CountAsync(cancellationToken: cancellationToken);
 
         return new Range<TModel>(range.First, range.Last, results, count);
     }

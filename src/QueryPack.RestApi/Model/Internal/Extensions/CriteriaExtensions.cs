@@ -28,7 +28,7 @@ internal static class CriteriaExtensions
            return MethodFactory.CreateGenericMethod<IQueryable<TModel>>(genericInclude);
        });
 
-        return ((Func<object, object[], IQueryable<TModel>>)cachedMethod)(null, new object[] { self, candidate.PropertyExpression, modelMetadata.InstanceExpression });
+        return ((Func<object, object[], IQueryable<TModel>>)cachedMethod)(null, [self, candidate.PropertyExpression, modelMetadata.InstanceExpression]);
     }
 
     public static IQueryable<TModel> OrderBy<TModel>(this IQueryable<TModel> self,
@@ -42,7 +42,7 @@ internal static class CriteriaExtensions
             return MethodFactory.CreateGenericMethod<IQueryable<TModel>>(genericSetOrder);
         });
 
-        return ((Func<object, object[], IQueryable<TModel>>)cachedMethod)(null, new object[] { self, candidate.PropertyExpression, modelMetadata.InstanceExpression, direction });
+        return ((Func<object, object[], IQueryable<TModel>>)cachedMethod)(null, [self, candidate.PropertyExpression, modelMetadata.InstanceExpression, direction]);
     }
 
     private static IQueryable<TModel> Include<TModel, TNavigation>(IQueryable<TModel> query,

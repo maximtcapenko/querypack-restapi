@@ -4,14 +4,9 @@ using Microsoft.OpenApi;
 using Model.Meta;
 using Swashbuckle.AspNetCore.SwaggerGen;
 
-internal class RestModelOperationFilter : IOperationFilter
+internal class RestModelOperationFilter(IModelMetadataProvider modelMetadataProvider) : IOperationFilter
 {
-    private readonly IModelMetadataProvider _modelMetadataProvider;
-
-    public RestModelOperationFilter(IModelMetadataProvider modelMetadataProvider)
-    {
-        _modelMetadataProvider = modelMetadataProvider;
-    }
+    private readonly IModelMetadataProvider _modelMetadataProvider = modelMetadataProvider;
 
     public void Apply(OpenApiOperation operation, OperationFilterContext context)
     {

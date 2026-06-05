@@ -15,7 +15,7 @@ internal class SavePipelineInterceptor(IServiceProvider serviceProvider) : ISave
 
         foreach (var entry in eventData.Context.ChangeTracker.Entries())
         {
-            await ProcessEntryAsync<PreSaveProcessorAttribute>(_serviceProvider, entry);
+            await ProcessEntryAsync<PreSaveProcessorAttribute>(_serviceProvider, entry, cancellationToken);
         }
 
         return result;
@@ -27,13 +27,13 @@ internal class SavePipelineInterceptor(IServiceProvider serviceProvider) : ISave
 
         foreach (var entry in eventData.Context.ChangeTracker.Entries())
         {
-            await ProcessEntryAsync<PostSaveProcessorAttribute>(_serviceProvider, entry);
+            await ProcessEntryAsync<PostSaveProcessorAttribute>(_serviceProvider, entry, cancellationToken);
         }
 
         return result;
     }
 
-    private static async Task ProcessEntryAsync<TAnnotation>(IServiceProvider serviceProvider, EntityEntry entry)
+    private static async Task ProcessEntryAsync<TAnnotation>(IServiceProvider serviceProvider, EntityEntry entry, CancellationToken cancellationToken = default)
         where TAnnotation : class, IPipelineAnnotation
     {
         var annotation = entry.Entity.GetType()
@@ -44,7 +44,7 @@ internal class SavePipelineInterceptor(IServiceProvider serviceProvider) : ISave
         {
             var processType = (annotation as TAnnotation)?.ProcessorType;
             var processor = serviceProvider.GetRequiredService(processType) as IPipelineProcessor;
-            await processor.ProcessAsync(entry);
+            await processor.ProcessAsync(entry, cancellationToken);
         }
     }
 }

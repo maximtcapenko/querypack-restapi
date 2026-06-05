@@ -4,5 +4,5 @@ using Microsoft.EntityFrameworkCore.ChangeTracking;
 
 public interface IPipelineProcessor
 {
-    Task ProcessAsync(EntityEntry entry);
+    Task ProcessAsync(EntityEntry entry, CancellationToken cancellationToken);
 }

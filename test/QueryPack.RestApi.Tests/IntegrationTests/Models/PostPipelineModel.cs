@@ -17,7 +17,7 @@ public class PostSaveModelProcessor : IPipelineProcessor
 {
     public PostPipelineModel CapturedModelInstance { get; set; }
 
-    public Task ProcessAsync(EntityEntry entry)
+    public Task ProcessAsync(EntityEntry entry, CancellationToken cancellationToken = default)
     {
         CapturedModelInstance = entry.Entity as PostPipelineModel;
 

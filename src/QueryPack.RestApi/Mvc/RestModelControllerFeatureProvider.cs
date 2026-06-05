@@ -6,17 +6,11 @@ using Microsoft.AspNetCore.Mvc.ApplicationParts;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using RestApi.Model;
 
-internal class RestModelControllerFeatureProvider : IApplicationFeatureProvider<ControllerFeature>
+internal class RestModelControllerFeatureProvider(Assembly assembly, IEnumerable<Type> controllerCandidates) : IApplicationFeatureProvider<ControllerFeature>
 {
-    private readonly Assembly _modelsAssembly;
+    private readonly Assembly _modelsAssembly = assembly;
 
-    private readonly IEnumerable<Type> _controllerCandidates;
-
-    public RestModelControllerFeatureProvider(Assembly assembly, IEnumerable<Type> controllerCandidates)
-    {
-        _controllerCandidates = controllerCandidates;
-         _modelsAssembly = assembly;
-    }
+    private readonly IEnumerable<Type> _controllerCandidates = controllerCandidates;
 
     public void PopulateFeature(IEnumerable<ApplicationPart> parts, ControllerFeature feature)
     {

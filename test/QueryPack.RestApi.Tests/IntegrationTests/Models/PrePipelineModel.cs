@@ -16,11 +16,11 @@ public class PrePipelineModel
 
 public class PreSaveModelProcessor : IPipelineProcessor
 {
-    public Task ProcessAsync(EntityEntry entry)
+    public Task ProcessAsync(EntityEntry entry, CancellationToken cancellationToken = default)
     {
         var instance = entry.Entity as PrePipelineModel;
         instance.Version = "v1.0";
-        
+
         return Task.CompletedTask;
     }
 }

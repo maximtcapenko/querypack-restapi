@@ -2,12 +2,7 @@ namespace QueryPack.RestApi.Model;
 
 
 [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = true)]
-public class RestApiAttribute : Attribute
+public class RestApiAttribute(string route) : Attribute
 {
-    public string Route { get; set; }
-
-    public RestApiAttribute(string route)
-    {
-        Route = route;
-    }
+    public string Route { get; set; } = route;
 }

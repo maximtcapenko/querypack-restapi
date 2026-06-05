@@ -13,14 +13,9 @@ using RestApi.Model;
 
 public record SqlServerServicesOptions(string ConnectionString);
 
-internal class SqlScaffoldService : IScaffoldService
+internal class SqlScaffoldService(SqlServerServicesOptions options) : IScaffoldService
 {
-    private readonly SqlServerServicesOptions _options;
-
-    public SqlScaffoldService(SqlServerServicesOptions options)
-    {
-        _options = options;
-    }
+    private readonly SqlServerServicesOptions _options = options;
 
     public ScaffoldedModel ScaffoldModel(ModelCodeGenerationOptions options)
     {

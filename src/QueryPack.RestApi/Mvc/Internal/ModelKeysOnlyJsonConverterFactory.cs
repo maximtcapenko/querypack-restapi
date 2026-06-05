@@ -32,15 +32,10 @@ internal class ModelKeysOnlyJsonConverterFactory(ModelMetadata modelMetadata) : 
         return factory(_modelMetadata);
     }
 
-    class ModelKeysJsonConverter<TModel> : JsonConverter<TModel>
+    class ModelKeysJsonConverter<TModel>(ModelMetadata modelMetadata) : JsonConverter<TModel>
         where TModel : class
     {
-        private readonly ModelMetadata _modelMetadata;
-
-        public ModelKeysJsonConverter(ModelMetadata modelMetadata)
-        {
-            _modelMetadata = modelMetadata;
-        }
+        private readonly ModelMetadata _modelMetadata = modelMetadata;
 
         public override TModel Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
         {

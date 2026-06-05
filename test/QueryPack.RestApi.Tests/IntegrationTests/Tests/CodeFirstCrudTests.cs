@@ -12,15 +12,10 @@ using Xunit;
 
 namespace QueryPack.RestApi.Tests.IntegrationTests.Tests;
 
-public class CodeFirstCrudTests : IClassFixture<WebApplicationFactory<Program>>
+public class CodeFirstCrudTests(WebApplicationFactory<Program> applicationFactory) : IClassFixture<WebApplicationFactory<Program>>
 {
     private const string BasePath = "/api";
-    private readonly WebApplicationFactory<Program> _applicationFactory;
-
-    public CodeFirstCrudTests(WebApplicationFactory<Program> applicationFactory)
-    {
-        _applicationFactory = applicationFactory.AsCodeFirstModelContextWebApp<ModelsContext>();
-    }
+    private readonly WebApplicationFactory<Program> _applicationFactory = applicationFactory.AsCodeFirstModelContextWebApp<ModelsContext>();
 
     [Fact]
     public async Task Get_all_records_should_return_success()
